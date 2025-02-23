@@ -15,5 +15,7 @@
 	</array>
 	<key>GIDClientID</key>
 	<string>317124361270-f1ndflg640rsnkejqdtaht4mv4t5cop1.apps.googleusercontent.com</string>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/timfee/gontime_updates/refs/heads/main/appcast.xml</string>
 </dict>
 </plist>

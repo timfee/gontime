@@ -67,12 +67,14 @@ struct SettingsView: View {
                 // MARK: - Start at login & version
                 Section {
                     LaunchAtLogin.Toggle("Start at login")
+                } footer: {
+                    
+                    Text("Version \(Bundle.main.appVersionLong)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 10)
+                        .frame(maxWidth: .infinity)
                 }
-
-                Text("Version \(Bundle.main.appVersionLong)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 10)
             }
             .animation(.spring(), value: showEventTitleInMenuBar)
             .formStyle(.grouped)
@@ -90,7 +92,12 @@ struct SettingsView: View {
                 }
             }
         }
+        .frame(minWidth: 400)
         .frame(width: 400)
+        .frame(height: 450)
+        
+        .windowResizeBehavior(.automatic)
+        
 
     }
 }
@@ -98,4 +105,5 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
         .environmentObject(AppState())
+    
 }
