@@ -7,11 +7,10 @@
 
 import SwiftUI
 
-private enum Constants {
+struct EventConferenceLink: View {
+    
     static let iconSize: CGFloat = 16
-}
-
-struct ConferenceLink: View {
+    
     let uri: String
     let solution: ConferenceSolution
     let isInProgress: Bool
@@ -23,10 +22,16 @@ struct ConferenceLink: View {
             {
                 AsyncImage(url: url) { image in
                     image.resizable()
-                        .frame(width: Constants.iconSize, height: Constants.iconSize)
+                        .frame(
+                            width: EventConferenceLink.iconSize,
+                            height: EventConferenceLink.iconSize
+                        )
                 } placeholder: {
                     Image(systemName: "video.fill")
-                        .frame(width: Constants.iconSize, height: Constants.iconSize)
+                        .frame(
+                            width: EventConferenceLink.iconSize,
+                            height: EventConferenceLink.iconSize
+                        )
                 }
             } else {
                 Text(solution.name)

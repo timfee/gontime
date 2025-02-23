@@ -6,7 +6,7 @@
 import Combine
 import Foundation
 
-final class EventFetcher: ObservableObject {
+final class EventData: ObservableObject {
     // MARK: - Published Properties
     @Published private(set) var events: [GoogleEvent] = []
     @Published private(set) var error: String? = nil

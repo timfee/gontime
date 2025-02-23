@@ -1,68 +1,60 @@
-//
-//  GoogleSignInAuthenticator.swift
-//  gontime
-//
-//  Created by Tim Feeley on 2/20/25.
-//
-
 import Foundation
 import GoogleSignIn
 
-final class GoogleSignInAuthenticator {
+final class AuthenticationService {
+    // MARK: - Constants
+    private let calendarScope =
+        "https://www.googleapis.com/auth/calendar.readonly"
+
+    // MARK: - Authentication
     func signIn(completion: @escaping (Result<GIDGoogleUser, Error>) -> Void) {
         guard let presentingWindow = NSApplication.shared.windows.first else {
-            completion(.failure(NSError(domain: "SignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "No presenting window found!"])))
+            completion(
+                .failure(AppError.general("No presenting window found!")))
             return
         }
-        
-        let additionalScopes = ["https://www.googleapis.com/auth/calendar.readonly"]
-        
-        GIDSignIn.sharedInstance.signIn(withPresenting: presentingWindow, hint: nil, additionalScopes: additionalScopes) {
- result,
- error in
-            
-            // ✅ Handle explicit Google Sign-In cancellations
+
+        GIDSignIn.sharedInstance.signIn(
+            withPresenting: presentingWindow,
+            hint: nil,
+            additionalScopes: [calendarScope]
+        ) { result, error in
             if let error = error as NSError?,
- error.code == GIDSignInError.canceled.rawValue {
-                completion(.failure(NSError(domain: "SignIn", code: -2, userInfo: [NSLocalizedDescriptionKey: "Sign-in was cancelled by the user."])))
-                return
-            }
-            
-            // ✅ Handle silent cancellation (result and error are nil)
-            if result == nil {
-                completion(.failure(NSError(domain: "SignIn", code: -3, userInfo: [NSLocalizedDescriptionKey: "Sign-in was cancelled or failed."])))
-                return
-            }
-            
-            guard let result = result else {
+                error.code == GIDSignInError.canceled.rawValue
+            {
                 completion(
                     .failure(
-                        NSError(
-                            domain: "SignIn",
-                            code: -4,
-                            userInfo: [NSLocalizedDescriptionKey: "\(error?.localizedDescription ?? "Unknown error")"]
-                        )
-                    )
-                )
+                        AppError.auth(
+                            NSError(
+                                domain: "SignIn",
+                                code: -2,
+                                userInfo: [
+                                    NSLocalizedDescriptionKey:
+                                        "Sign-in was cancelled by the user."
+                                ]
+                            ))))
                 return
             }
-            
-            if let grantedScopes = result.user.grantedScopes,
- grantedScopes.contains("https://www.googleapis.com/auth/calendar.readonly") {
-                completion(.success(result.user))
-            } else {
-                completion(.failure(NSError(domain: "SignIn", code: -5, userInfo: [NSLocalizedDescriptionKey: "Google Calendar permission was not granted."])))
+
+            guard let result = result,
+                let grantedScopes = result.user.grantedScopes,
+                grantedScopes.contains(self.calendarScope)
+            else {
+                completion(
+                    .failure(
+                        AppError.auth(
+                            NSError(
+                                domain: "SignIn",
+                                code: -3,
+                                userInfo: [
+                                    NSLocalizedDescriptionKey:
+                                        "Calendar permission was not granted."
+                                ]
+                            ))))
+                return
             }
-        }
-    }
-    
-    func signOut() {
-        GIDSignIn.sharedInstance.signOut()
-    }
-    
-    func disconnect(completion: @escaping (Error?) -> Void) {
-        GIDSignIn.sharedInstance.disconnect { error in
-            completion(error)
+
+            completion(.success(result.user))
         }
     }
 }

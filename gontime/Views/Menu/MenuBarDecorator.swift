@@ -15,12 +15,12 @@ final class MenuBarDecorator: MenuBarDecoratorProtocol {
     private var cancellables = Set<AnyCancellable>()
     
     func decorateTitle(error: String?, events: [GoogleEvent]) -> String {
-        if let error = error {
-            return Constants.MenuBar.errorTitle
+        if error != nil {
+            return AppConstants.MenuBar.errorTitle
         }
         
         guard let event = events.first else {
-            return Constants.MenuBar.allClearTitle
+            return AppConstants.MenuBar.allClearTitle
         }
         
         return formatEventTitle(for: event)
@@ -32,9 +32,9 @@ final class MenuBarDecorator: MenuBarDecoratorProtocol {
         // First handle the in-progress case since it's special
         if event.isInProgress {
             return showTitle
-                ? String(format: Constants.MenuBar.TimeFormat.withTitle["now"]!,
+                ? String(format: AppConstants.MenuBar.TimeFormat.withTitle["now"]!,
                          formatTitle(event))
-                : Constants.MenuBar.TimeFormat.now
+                : AppConstants.MenuBar.TimeFormat.now
         }
         
         // Then handle upcoming events
@@ -44,24 +44,24 @@ final class MenuBarDecorator: MenuBarDecoratorProtocol {
             
             if showTitle {
                 return String(
-                    format: Constants.MenuBar.TimeFormat.withTitle[timeKey]!,
+                    format: AppConstants.MenuBar.TimeFormat.withTitle[timeKey]!,
                     timeValue,
                     formatTitle(event)
                 )
             } else {
                 return String(
-                    format: Constants.MenuBar.TimeFormat.noTitle[timeKey]!,
+                    format: AppConstants.MenuBar.TimeFormat.noTitle[timeKey]!,
                     timeValue
                 )
             }
         }
         
-        return Constants.MenuBar.allClearTitle
+        return AppConstants.MenuBar.allClearTitle
     }
     
     private func formatTitle(_ event: GoogleEvent) -> String {
         formatTitle(
-            event.summary ?? Constants.MenuBar.untitledEvent,
+            event.summary ?? AppConstants.MenuBar.untitledEvent,
             truncateLength: Defaults[.truncatedEventTitleLength],
             simplify: Defaults[.simplifyEventTitles]
         )
@@ -72,12 +72,12 @@ final class MenuBarDecorator: MenuBarDecoratorProtocol {
         
         if simplify {
             formatted = formatted.replacingOccurrences(
-                of: Constants.Text.bracketsAndParens,
+                of: AppConstants.Text.bracketsAndParens,
                 with: "",
                 options: .regularExpression
             )
             formatted = formatted.replacingOccurrences(
-                of: Constants.Text.multipleSpaces,
+                of: AppConstants.Text.multipleSpaces,
                 with: " ",
                 options: .regularExpression
             )

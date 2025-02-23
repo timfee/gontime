@@ -19,7 +19,6 @@ final class CalendarDataService {
     
     private let baseURL: String
     private let eventFilter: EventFilterProtocol
-    private let session: URLSession
     
     private lazy var components: URLComponents? = {
         var comps = URLComponents(string: baseURL)
@@ -27,37 +26,34 @@ final class CalendarDataService {
         return comps
     }()
     
-    private lazy var request: URLRequest? = {
-        guard let components = components, let url = components.url else { return nil }
-        return URLRequest(url: url)
-    }()
-    
     // MARK: - Initialization
     init(
         baseURL: String = "https://www.googleapis.com/calendar/v3/calendars/primary/events",
-        eventFilter: EventFilterProtocol = DefaultEventFilter(),
-        session: URLSession? = nil
+        eventFilter: EventFilterProtocol = DefaultEventFilter()
     ) {
         self.baseURL = baseURL
         self.eventFilter = eventFilter
-        self.session = session ?? URLSession.shared
     }
     
     // MARK: - Public Methods
     func fetchEvents() async throws -> [GoogleEvent] {
-        guard let req = request else {
-            throw CalendarServiceError.request
+        guard let components = components, let url = components.url else {
+            throw AppError.request
         }
         
+        // Get an authorized session
+        let session = try await AuthorizationTokenService.createSession()
+        let request = URLRequest(url: url)
+        
         do {
-            let (data, response) = try await session.data(for: req)
+            let (data, response) = try await session.data(for: request)
             
             guard let httpResponse = response as? HTTPURLResponse else {
-                throw CalendarServiceError.network(NSError(domain: "HTTP", code: 0))
+                throw AppError.network(NSError(domain: "HTTP", code: 0))
             }
             
             if !(200...299).contains(httpResponse.statusCode) {
-                throw CalendarServiceError.network(
+                throw AppError.network(
                     NSError(domain: "HTTP", code: httpResponse.statusCode)
                 )
             }
@@ -65,9 +61,9 @@ final class CalendarDataService {
             let decodedResponse = try JSONDecoder().decode(GoogleEventsResponse.self, from: data)
             return eventFilter.filter(decodedResponse.items)
         } catch let decodingError as DecodingError {
-            throw CalendarServiceError.decode(decodingError)
+            throw AppError.decode(decodingError)
         } catch let error {
-            throw CalendarServiceError.network(error)
+            throw AppError.network(error)
         }
     }
     
