@@ -7,24 +7,29 @@
 
 import GoogleSignIn
 import MenuBarExtraAccess
-import Sparkle
 import SwiftUI
 
 @main
 struct gontimeApp: App {
-    private let updaterController: SPUStandardUpdaterController
-
+    
     @State var isMenuPresented: Bool = false
-
+    
     @StateObject private var appState = AppState()
+    @StateObject private var updateService = UpdateService.shared
+    
     @Environment(\.openSettings) private var openSettings
-
+    
     init() {
-        updaterController = SPUStandardUpdaterController(
-            startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil
-        )
-    }
+        let openSettingsAction = Environment(\.openSettings).wrappedValue
 
+        Task { @MainActor in
+            if await UpdateService.shared.checkForUpdates() {
+                openSettingsAction()
+                NSApplication.shared.activate(ignoringOtherApps: true)
+            }
+        }
+    }
+    
     var body: some Scene {
         MenuBarExtra(
             content: {
@@ -35,9 +40,9 @@ struct gontimeApp: App {
                     } else {
                         Button("Sign In with Google", action: appState.signIn)
                     }
-
+                    
                     Divider().padding(.vertical, 4)
-
+                    
                     Button(
                         appState.currentError != nil ? "⚠️ Settings" : "Settings"
                     ) {
@@ -45,8 +50,7 @@ struct gontimeApp: App {
                         openSettings()
                         NSApplication.shared.activate(ignoringOtherApps: true)
                     }
-                    CheckForUpdatesView(updater: updaterController.updater)
-                        
+                    
                     Button("Quit") {
                         NSApplication.shared.terminate(nil)
                     }
@@ -54,17 +58,26 @@ struct gontimeApp: App {
                     .padding(.horizontal, 10)
                     .padding(.bottom, 4)
                     .padding(.top, 8)
-
+                
             },
             label: {
                 Text(
                     appState.currentError != nil
-                        ? "⚠️ Calendar error" : appState.menuBarTitle)
+                    ? "⚠️ Calendar error" : appState.menuBarTitle)
             }
         )
         .menuBarExtraStyle(.window)
         .menuBarExtraAccess(isPresented: $isMenuPresented)
-
+        
+        WindowGroup("Update", id: "update") {
+            if let updateInfo = updateService.updateAvailable {
+                UpdateView(updateInfo: updateInfo)
+            }
+        }
+        .defaultSize(width: 400, height: 250)
+        .windowStyle(.hiddenTitleBar)
+        
+        
         Settings {
             SettingsView()
                 .environmentObject(appState)

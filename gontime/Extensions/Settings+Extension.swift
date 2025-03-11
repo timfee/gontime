@@ -14,5 +14,5 @@ extension Defaults.Keys {
     static let simplifyEventTitles = Key<Bool>("simplifyEventTitles", default: true)
     static let ignoreFullDayEvents = Key<Bool>("ignoreFullDayEvents", default: true)
     static let ignoreEventsWithoutAttendees = Key<Bool>("ignoreEventsWithoutAttendees", default: true)
+    static let meetingNotificationTime = Key<Int?>("meetingNotificationTime", default: 5)
 }
-

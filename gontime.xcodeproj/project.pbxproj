@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E83844CA2D6BD31F00BA2C22 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = E83844C92D6BD31F00BA2C22 /* Sparkle */; };
 		E8B76FD52D692DC200EF16DB /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = E8B76FD42D692DC200EF16DB /* Defaults */; };
 		E8B76FD72D692DC200EF16DB /* DefaultsMacros in Frameworks */ = {isa = PBXBuildFile; productRef = E8B76FD62D692DC200EF16DB /* DefaultsMacros */; };
 		E8B76FDC2D6940AF00EF16DB /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = E8B76FDB2D6940AF00EF16DB /* LaunchAtLogin */; };
@@ -46,7 +45,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E83844CA2D6BD31F00BA2C22 /* Sparkle in Frameworks */,
 				E8B76FD52D692DC200EF16DB /* Defaults in Frameworks */,
 				E8B76FD72D692DC200EF16DB /* DefaultsMacros in Frameworks */,
 				E8F399752D67B1DB00EA45B1 /* GoogleSignIn in Frameworks */,
@@ -101,7 +99,6 @@
 				E8B76FD62D692DC200EF16DB /* DefaultsMacros */,
 				E8B76FDB2D6940AF00EF16DB /* LaunchAtLogin */,
 				E8B76FEA2D6A3D9100EF16DB /* MenuBarExtraAccess */,
-				E83844C92D6BD31F00BA2C22 /* Sparkle */,
 			);
 			productName = gontime;
 			productReference = E8F3995D2D67B01900EA45B1 /* gontime.app */;
@@ -136,7 +133,6 @@
 				E8B76FD32D692DC200EF16DB /* XCRemoteSwiftPackageReference "Defaults" */,
 				E8B76FDA2D6940AF00EF16DB /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
 				E8B76FE92D6A3D9100EF16DB /* XCRemoteSwiftPackageReference "MenuBarExtraAccess" */,
-				E83844C82D6BD31F00BA2C22 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E8F3995E2D67B01900EA45B1 /* Products */;
@@ -304,7 +300,10 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = gontime/Info.plist;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_CFBundleDisplayName = gOnTime;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2025 Google";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -333,7 +332,10 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = gontime/Info.plist;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_CFBundleDisplayName = gOnTime;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2025 Google";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -371,14 +373,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		E83844C82D6BD31F00BA2C22 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.7.0;
-			};
-		};
 		E8B76FD32D692DC200EF16DB /* XCRemoteSwiftPackageReference "Defaults" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/Defaults";
@@ -414,11 +408,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		E83844C92D6BD31F00BA2C22 /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E83844C82D6BD31F00BA2C22 /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
-		};
 		E8B76FD42D692DC200EF16DB /* Defaults */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E8B76FD32D692DC200EF16DB /* XCRemoteSwiftPackageReference "Defaults" */;

@@ -9,6 +9,8 @@ import SwiftUI
 
 struct MenuView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.openSettings) private var openSettings
+    
     @Binding var isMenuPresented: Bool
     
     var body: some View {

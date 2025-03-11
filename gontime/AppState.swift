@@ -68,6 +68,14 @@ final class AppState: ObservableObject {
         clearError()
     }
     
+    func refreshEvents() {
+        if case .signedIn = authState {
+            eventFetcher.start()
+        } else {
+            eventFetcher.stop()
+        }
+    }
+    
     // MARK: - Private Methods
     private func handleError(_ error: AppError) {
         currentError = error
