@@ -4,13 +4,14 @@
 //
 //  Copyright 2025 Google LLC
 //
-//  Author: timfee@ (Tim Feeley)
+//  Author: timfee@google.com
 //
 
 import SwiftUI
 
 /// Provides mock data for events to be used in previews or testing.
 struct EventMockData: View {
+
   // MARK: - Constants
 
   private enum Constants {

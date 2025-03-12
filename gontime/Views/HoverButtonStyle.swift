@@ -4,13 +4,14 @@
 //
 //  Copyright 2025 Google LLC
 //
-//  Author: timfee@ (Tim Feeley)
+//  Author: timfee@google.com
 //
 
 import SwiftUI
 
-/// A button style that shows a hover effect and responds to focus state
+/// A button style that provides visual feedback for hover and focus states
 struct HoverButtonStyle: ButtonStyle {
+
   // MARK: - Constants
 
   enum Constants {
@@ -30,6 +31,10 @@ struct HoverButtonStyle: ButtonStyle {
 
   // MARK: - Initialization
 
+  /// Creates a hover button style with custom dimensions
+  /// - Parameters:
+  ///   - height: Button height (defaults to 32)
+  ///   - cornerRadius: Corner radius for the button background (defaults to 8)
   init(
     height: CGFloat = Constants.defaultHeight,
     cornerRadius: CGFloat = Constants.defaultCornerRadius
@@ -63,8 +68,11 @@ struct HoverButtonStyle: ButtonStyle {
 }
 
 extension ButtonStyle where Self == HoverButtonStyle {
+
+  /// Default hover button style
   static var hover: HoverButtonStyle { HoverButtonStyle() }
 
+  /// Creates a custom hover button style
   static func hover(
     height: CGFloat = HoverButtonStyle.Constants.defaultHeight,
     cornerRadius: CGFloat = HoverButtonStyle.Constants.defaultCornerRadius

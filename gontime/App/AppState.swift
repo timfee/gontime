@@ -4,7 +4,7 @@
 //
 //  Copyright 2025 Google LLC
 //
-//  Author: timfee@ (Tim Feeley)
+//  Author: timfee@google.com
 //
 
 import Combine
@@ -15,6 +15,7 @@ import SwiftUI
 /// Manages the overall state of the application, including authentication, events, and menu bar updates.
 @MainActor
 final class AppState: ObservableObject {
+
   // MARK: - Constants
 
   private enum Constants {
@@ -71,6 +72,7 @@ final class AppState: ObservableObject {
       self.authState = .signedOut
       self.currentError = error as? AppError ?? .auth(error)
     }
+
   }
 
   /// Signs out the current user and resets relevant state.
@@ -92,6 +94,7 @@ final class AppState: ObservableObject {
         } catch {
           self.currentError = error as? AppError ?? .calendar(error)
         }
+
       }
     } else {
       eventFetcher.stop()

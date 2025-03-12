@@ -4,13 +4,14 @@
 //
 //  Copyright 2025 Google LLC
 //
-//  Author: timfee@ (Tim Feeley)
+//  Author: timfee@google.com
 //
 
 import SwiftUI
 
 /// A view that displays update information and provides update actions
 @MainActor
+
 struct UpdateView: View {
   let updateInfo: UpdateInfo
   @Environment(\.dismiss) private var dismiss

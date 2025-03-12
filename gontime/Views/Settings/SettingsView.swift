@@ -4,21 +4,32 @@
 //
 //  Copyright 2025 Google LLC
 //
-//  Author: timfee@ (Tim Feeley)
+//  Author: timfee@google.com
 //
 
 import Defaults
 import LaunchAtLogin
 import SwiftUI
 
+// MARK: - Settings View
+
+/// Main settings view providing user configuration options
+
 struct SettingsView: View {
   @EnvironmentObject var appState: AppState
   @StateObject private var updateService = UpdateService.shared
   @State private var showingUpdateSheet = false
+
+  // MARK: - User Preferences
+
   @Default(.showEventTitleInMenuBar) var showEventTitleInMenuBar: Bool
   @Default(.truncatedEventTitleLength) var truncatedEventTitleLength: Int
   @Default(.simplifyEventTitles) var simplifyEventTitles: Bool
   @Default(.meetingNotificationTime) var meetingNotificationTime: Int?
+
+  // MARK: - View Components
+
+  /// Notification settings section with permission handling
   @ViewBuilder
   private var notificationSection: some View {
     Section {
@@ -35,6 +46,8 @@ struct SettingsView: View {
       handleNotificationChange(to: newValue)
     }
   }
+
+  /// Event display configuration section
   @ViewBuilder
   private var eventDisplaySection: some View {
     Section {
@@ -49,6 +62,8 @@ struct SettingsView: View {
       }
     }
   }
+
+  /// Version information footer with update availability
   @ViewBuilder
   private var versionFooter: some View {
     VStack(spacing: 4) {
@@ -69,6 +84,10 @@ struct SettingsView: View {
     .padding(.top, 10)
     .frame(maxWidth: .infinity)
   }
+
+  // MARK: - Notification Handling
+
+  /// Handles notification permission requests when enabling notifications
   private func handleNotificationChange(to newValue: Int?) {
     guard newValue != nil else { return }
     Task {
@@ -82,6 +101,9 @@ struct SettingsView: View {
       }
     }
   }
+
+  // MARK: - View Body
+
   var body: some View {
     VStack {
       Form {
@@ -148,9 +170,14 @@ struct SettingsView: View {
     .windowResizeBehavior(.automatic)
   }
 }
+
+// MARK: - Event Title Settings View
+
+/// Configuration view for event title display options
 private struct EventTitleSettings: View {
   @Binding var truncatedLength: Int
   @Binding var simplifyTitles: Bool
+
   var body: some View {
     HStack {
       Stepper(
@@ -160,6 +187,7 @@ private struct EventTitleSettings: View {
       }
       Text("\(truncatedLength) characters")
     }
+
     Toggle(isOn: $simplifyTitles) {
       Text("Clean up event titles")
       Text(
@@ -168,6 +196,9 @@ private struct EventTitleSettings: View {
     }
   }
 }
+
+// MARK: - Preview
+
 #Preview {
   SettingsView()
     .environmentObject(AppState())

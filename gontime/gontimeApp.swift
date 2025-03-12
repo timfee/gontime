@@ -4,7 +4,7 @@
 //
 //  Copyright 2025 Google LLC
 //
-//  Author: timfee@ (Tim Feeley)
+//  Author: timfee@google.com
 //
 
 import GoogleSignIn
@@ -12,11 +12,16 @@ import MenuBarExtraAccess
 import SwiftUI
 
 @main
+
 struct gontimeApp: App {
   @State var isMenuPresented: Bool = false
   @StateObject private var appState = AppState()
   @StateObject private var updateService = UpdateService.shared
   @Environment(\.openSettings) private var openSettings
+
+  // MARK: - Initialization
+
+  /// Sets up initial app state and checks for updates
   @MainActor
   init() {
     let openSettingsAction = Environment(\.openSettings).wrappedValue
@@ -27,6 +32,9 @@ struct gontimeApp: App {
       }
     }
   }
+
+  // MARK: - Scene Configuration
+
   var body: some Scene {
     MenuBarExtra(
       content: {
@@ -43,7 +51,7 @@ struct gontimeApp: App {
           }
           Divider().padding(.vertical, 4)
           Button(
-            appState.currentError != nil ? "⚠️ Settings" : "Settings"
+            appState.currentError != nil ? "⚠️\u{fe0f} Settings" : "Settings"
           ) {
             isMenuPresented = false
             openSettings()
@@ -60,11 +68,13 @@ struct gontimeApp: App {
       label: {
         Text(
           appState.currentError != nil
-            ? "⚠️ Calendar error" : appState.menuBarTitle)
+            ? "⚠️\u{fe0f} Calendar error" : appState.menuBarTitle)
       }
     )
     .menuBarExtraStyle(.window)
     .menuBarExtraAccess(isPresented: $isMenuPresented)
+
+    // Update window configuration
     WindowGroup("Update", id: "update") {
       if let updateInfo = updateService.updateAvailable {
         UpdateView(updateInfo: updateInfo)
@@ -72,6 +82,8 @@ struct gontimeApp: App {
     }
     .defaultSize(width: 400, height: 250)
     .windowStyle(.hiddenTitleBar)
+
+    // Settings window configuration
     Settings {
       SettingsView()
         .environmentObject(appState)

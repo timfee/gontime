@@ -4,7 +4,7 @@
 //
 //  Copyright 2025 Google LLC
 //
-//  Author: timfee@ (Tim Feeley)
+//  Author: timfee@google.com
 //
 
 import Foundation
@@ -14,6 +14,7 @@ import os.log
 enum Logger {
 
   // MARK: - Private Enums
+
   private enum Level: String {
     case debug = "📝"
     case error = "❌"
@@ -29,10 +30,12 @@ enum Logger {
   }
 
   // MARK: - Private Properties
+
   private static let osLog = OSLog(
     subsystem: Bundle.main.bundleIdentifier ?? "com.timfee.gontime", category: "app")
 
   // MARK: - Public Methods
+
   /// Logs a debug message.
   static func debug(
     _ message: String,
@@ -63,6 +66,7 @@ enum Logger {
   }
 
   // MARK: - Private Methods
+
   private static func log(
     _ level: Level,
     message: String,

@@ -4,7 +4,7 @@
 //
 //  Copyright 2025 Google LLC
 //
-//  Author: timfee@ (Tim Feeley)
+//  Author: timfee@google.com
 //
 
 import Foundation
@@ -12,6 +12,7 @@ import Foundation
 struct GoogleEventsResponse: Codable {
   let items: [GoogleEvent]
 }
+
 struct GoogleEvent: Codable, Identifiable {
   let kind: String
   let etag: String
@@ -60,6 +61,7 @@ struct GoogleEvent: Codable, Identifiable {
     return (minutes, hours)
   }
 }
+
 struct EventDateTime: Codable {
   let dateTime: Date?
   let date: Date?
@@ -84,6 +86,7 @@ struct EventDateTime: Codable {
       .flatMap(dateFormatter.date)
   }
 }
+
 struct Attendee: Codable {
   let email: String
   let displayName: String?
@@ -92,19 +95,23 @@ struct Attendee: Codable {
   let organizer: Bool?
   let resource: Bool?
 }
+
 struct ConferenceData: Codable {
   let conferenceId: String
   let entryPoints: [EntryPoint]?
   let conferenceSolution: ConferenceSolution?
 }
+
 struct ConferenceSolution: Codable {
   let key: Key
   let name: String
   let iconUri: String?
 }
+
 struct Key: Codable {
   let type: String
 }
+
 struct EntryPoint: Codable {
   let entryPointType: String
   let uri: String
