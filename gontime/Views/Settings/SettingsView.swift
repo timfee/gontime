@@ -1,5 +1,5 @@
 //
-//  Views/Settings/SettingsView.swift
+//  SettingsView.swift
 //  gOnTime
 //
 //  Copyright 2025 Google LLC

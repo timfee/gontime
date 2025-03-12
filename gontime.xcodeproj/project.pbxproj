@@ -23,7 +23,7 @@
 		E8F399872D67C8AB00EA45B1 /* Exceptions for "gontime" folder in "gontime" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				clean.sh,
+				clean.py,
 				Info.plist,
 			);
 			target = E8F3995C2D67B01900EA45B1 /* gontime */;

@@ -1,5 +1,5 @@
 //
-//  Models/GoogleEvent.swift
+//  GoogleEvent.swift
 //  gOnTime
 //
 //  Copyright 2025 Google LLC

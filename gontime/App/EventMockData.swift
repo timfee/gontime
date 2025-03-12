@@ -1,5 +1,5 @@
 //
-//  App/EventMockData.swift
+//  EventMockData.swift
 //  gOnTime
 //
 //  Copyright 2025 Google LLC
@@ -9,11 +9,17 @@
 
 import SwiftUI
 
+/// Provides mock data for events to be used in previews or testing.
 struct EventMockData: View {
+  // MARK: - Constants
+
   private enum Constants {
     static let googleMeetIcon =
       "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v1/web-96dp/logo_meet_2020q4_color_2x_web_96dp.png"
   }
+
+  // MARK: - Body
+
   var body: some View {
     let now = Date()
     let calendar = Calendar.current
@@ -23,6 +29,7 @@ struct EventMockData: View {
       second: 0,
       of: now
     )!
+
     VStack(spacing: 0) {
       Group {
         createMeetingEvent(
@@ -61,6 +68,10 @@ struct EventMockData: View {
       }
     }
   }
+
+  // MARK: - Private Methods
+
+  /// Creates a mock meeting event with conference data.
   private func createMeetingEvent(
     id: String,
     title: String,
@@ -102,6 +113,8 @@ struct EventMockData: View {
       )
     )
   }
+
+  /// Creates a mock basic event without conference data.
   private func createBasicEvent(
     id: String,
     title: String,

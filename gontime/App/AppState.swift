@@ -1,5 +1,5 @@
 //
-//  App/AppState.swift
+//  AppState.swift
 //  gOnTime
 //
 //  Copyright 2025 Google LLC
@@ -12,22 +12,34 @@ import Defaults
 import GoogleSignIn
 import SwiftUI
 
+/// Manages the overall state of the application, including authentication, events, and menu bar updates.
 @MainActor
 final class AppState: ObservableObject {
+  // MARK: - Constants
+
   private enum Constants {
     static let defaultTitle = "Calendar"
     static let signedOutTitle = "All clear"
   }
+
+  // MARK: - Published Properties
+
   @Published private(set) var authState: AuthState = .signedOut {
     didSet { Task { await handleAuthStateChange() } }
   }
   @Published private(set) var menuBarTitle: String = Constants.defaultTitle
   @Published private(set) var currentError: AppError? = nil
   @Published private(set) var events: [GoogleEvent] = []
+
+  // MARK: - Private Properties
+
   private let eventFetcher: EventData
   private let titleGenerator: MenuBarTitleGenerator
   private let authenticationService: AuthenticationService
   private var cancellables = Set<AnyCancellable>()
+
+  // MARK: - Initialization
+
   init(
     calendarService: CalendarDataService = CalendarDataService(),
     eventFetcher: EventData? = nil,
@@ -41,9 +53,15 @@ final class AppState: ObservableObject {
     setupInitialAuthState()
     setupObservers()
   }
+
+  // MARK: - Public Methods
+
+  /// Clears the current error state.
   func clearError() {
     currentError = nil
   }
+
+  /// Initiates the sign-in process.
   func signIn() async {
     do {
       let user = try await authenticationService.signIn()
@@ -54,12 +72,16 @@ final class AppState: ObservableObject {
       self.currentError = error as? AppError ?? .auth(error)
     }
   }
+
+  /// Signs out the current user and resets relevant state.
   func signOut() {
     GIDSignIn.sharedInstance.signOut()
     authState = .signedOut
     currentError = nil
     events = []
   }
+
+  /// Refreshes the events if the user is signed in.
   func refreshEvents() {
     if case .signedIn = authState {
       Task {
@@ -75,13 +97,18 @@ final class AppState: ObservableObject {
       eventFetcher.stop()
     }
   }
+
+  // MARK: - Private Methods
+
   private func setupInitialAuthState() {
     if let user = GIDSignIn.sharedInstance.currentUser {
       Logger.state("Found existing signed-in user")
       self.authState = .signedIn(user)
       return
     }
+
     guard GIDSignIn.sharedInstance.hasPreviousSignIn() else { return }
+
     Logger.state("Attempting to restore previous sign-in")
     Task {
       do {
@@ -94,23 +121,29 @@ final class AppState: ObservableObject {
       }
     }
   }
+
   private func handleError(_ error: Error) {
     self.currentError = error as? AppError ?? .general(error)
   }
+
   private func handleAuthStateChange() async {
     Logger.state("Auth state changed to: \(authState)")
     switch authState {
     case .signedIn:
+
       Logger.debug("Starting event fetcher")
       eventFetcher.start()
     case .signedOut:
+
       Logger.debug("Stopping event fetcher")
       eventFetcher.stop()
       menuBarTitle = Constants.signedOutTitle
     }
   }
+
   private func setupObservers() {
     Logger.debug("Setting up observers")
+
     eventFetcher.$events
       .receive(on: DispatchQueue.main)
       .sink { [weak self] events in
@@ -119,6 +152,7 @@ final class AppState: ObservableObject {
         self.updateMenuBarTitle(events: events, error: self.currentError?.localizedDescription)
       }
       .store(in: &cancellables)
+
     Defaults.publisher(keys: [
       .showEventTitleInMenuBar,
       .truncatedEventTitleLength,
@@ -131,12 +165,16 @@ final class AppState: ObservableObject {
     }
     .store(in: &cancellables)
   }
+
   private func updateMenuBarTitle(events: [GoogleEvent], error: String?) {
     menuBarTitle = titleGenerator.generateTitle(
       error: error,
       events: events
     )
   }
+
+  // MARK: - AuthState Enum
+
   enum AuthState {
     case signedIn(GIDGoogleUser)
     case signedOut

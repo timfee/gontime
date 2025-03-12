@@ -1,5 +1,5 @@
 //
-//  Views/Settings/SignedOutUserView.swift
+//  SignedOutUserView.swift
 //  gOnTime
 //
 //  Copyright 2025 Google LLC

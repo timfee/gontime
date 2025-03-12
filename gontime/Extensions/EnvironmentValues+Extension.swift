@@ -1,5 +1,5 @@
 //
-//  Extensions/EnvironmentValues+Extension.swift
+//  EnvironmentValues+Extension.swift
 //  gOnTime
 //
 //  Copyright 2025 Google LLC
@@ -9,12 +9,16 @@
 
 import SwiftUI
 
+// MARK: - Environment Values Extension
 extension EnvironmentValues {
-  var timeColumnWidth: CGFloat {
-    get { self[TimeColumnWidthKey.self] }
-    set { self[TimeColumnWidthKey.self] = newValue }
-  }
+    /// Provides access to the time column width across the view hierarchy
+    var timeColumnWidth: CGFloat {
+        get { self[TimeColumnWidthKey.self] }
+        set { self[TimeColumnWidthKey.self] = newValue }
+    }
 }
+
+// MARK: - Private Environment Key
 private struct TimeColumnWidthKey: EnvironmentKey {
-  static let defaultValue: CGFloat = 0
+    static let defaultValue: CGFloat = 0
 }

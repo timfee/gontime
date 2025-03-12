@@ -1,5 +1,5 @@
 //
-//  Views/Settings/SignedInUserView.swift
+//  SignedInUserView.swift
 //  gOnTime
 //
 //  Copyright 2025 Google LLC

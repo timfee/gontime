@@ -1,5 +1,5 @@
 //
-//  Extensions/TimeWidthPreferenceKey+Extension.swift
+//  TimeWidthPreferenceKey+Extension.swift
 //  gOnTime
 //
 //  Copyright 2025 Google LLC
@@ -9,9 +9,12 @@
 
 import SwiftUI
 
+// MARK: - Time Width Preference Key
+/// Tracks the maximum width needed for time-based content layout
 struct TimeWidthPreferenceKey: PreferenceKey {
-  static var defaultValue: CGFloat = 0
-  static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-    value = max(value, nextValue())
-  }
+    static var defaultValue: CGFloat = 0
+    
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
 }
