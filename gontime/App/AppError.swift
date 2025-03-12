@@ -1,10 +1,3 @@
-//
-//  CalendarServiceError.swift
-//  gontime
-//
-//  Created by Tim Feeley on 2/23/25.
-//
-
 import Foundation
 
 enum AppError: LocalizedError {
@@ -12,23 +5,23 @@ enum AppError: LocalizedError {
     case calendar(Error)
     case network(Error)
     case decode(Error)
-    case request
-    case general(String)
+    case request(Error)
+    case general(Error)
     
     var errorDescription: String? {
         switch self {
             case .auth(let error):
-                return "Authentication error: \(error.localizedDescription)"
+                return "Authentication failed: \(error.localizedDescription)"
             case .calendar(let error):
-                return "Calendar error: \(error.localizedDescription)"
+                return "Calendar access failed: \(error.localizedDescription)"
             case .network(let error):
-                return "Network error: \(error.localizedDescription)"
+                return "Network connection failed: \(error.localizedDescription)"
             case .decode(let error):
-                return "Failed to decode response: \(error.localizedDescription)"
-            case .request:
-                return "Invalid request"
-            case .general(let message):
-                return message
+                return "Failed to process data: \(error.localizedDescription)"
+            case .request(let error):
+                return "Request failed: \(error.localizedDescription)"
+            case .general(let error):
+                return error.localizedDescription
         }
     }
 }

@@ -7,11 +7,18 @@
 
 import Foundation
 
+// Your imports remain the same
+
+// MARK: - Response Container
+/// Represents the response from Google Calendar API containing events
 struct GoogleEventsResponse: Codable {
     let items: [GoogleEvent]
 }
 
+// MARK: - Main Event Model
+/// Represents a Google Calendar event with its associated data
 struct GoogleEvent: Codable, Identifiable {
+    // MARK: Properties
     let kind: String
     let etag: String
     let id: String
@@ -23,98 +30,98 @@ struct GoogleEvent: Codable, Identifiable {
     let htmlLink: URL
     let conferenceData: ConferenceData?
     
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter
-    }()
-    
+    // MARK: Computed Properties
+    /// The event's start time, preferring dateTime over date
     var startTime: Date? { start?.dateTime ?? start?.date }
+    
+    /// The event's end time, preferring dateTime over date
     var endTime: Date? { end?.dateTime ?? end?.date }
     
+    /// Formatted start time string
     var formattedStartTime: String? {
-        guard let start = startTime else { return nil }
-        return Self.timeFormatter.string(from: start)
+        guard let startTime = startTime else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter.string(from: startTime)
     }
     
+    /// Whether the event is currently in progress
     var isInProgress: Bool {
-        guard let start = startTime, let end = endTime else { return false }
+        guard let start = startTime,
+              let end = endTime else { return false }
         let now = Date()
-        return now >= start && now <= end
+        // Use floor comparison for start time to handle edge cases
+        return now.timeIntervalSince(start) >= 0 && now <= end
     }
     
-    var isUpcoming: Bool {
-        guard let start = startTime else { return false }
-        let now = Date()
-        return start > now
-    }
-    
+    /// Time until the event starts, in (minutes, hours)
     var timeUntilStart: (minutes: Int, hours: Int)? {
         guard let start = startTime else { return nil }
         let now = Date()
-        
-        guard start > now else { return nil }
+        // Return nil if we're at or past the start time
+        guard start.timeIntervalSince(now) > 0 else { return nil }
         
         let timeInterval = start.timeIntervalSince(now)
         let totalMinutes = Int(timeInterval / 60)
         let hours = totalMinutes / 60
         let minutes = totalMinutes % 60
-        
         return (minutes, hours)
     }
     
+    /// Time until the event ends, in (minutes, hours)
     var timeUntilEnd: (minutes: Int, hours: Int)? {
         guard isInProgress,
               let end = endTime else { return nil }
+        let now = Date()
         
-        let interval = end.timeIntervalSince(Date())
-        let totalMinutes = Int(interval / 60)
+        let timeInterval = end.timeIntervalSince(now)
+        let totalMinutes = Int(timeInterval / 60)
         let hours = totalMinutes / 60
         let minutes = totalMinutes % 60
-        
         return (minutes, hours)
     }
 }
 
+// MARK: - Event Date Time
+/// Represents the date/time for an event's start or end
 struct EventDateTime: Codable {
+    // MARK: Properties
     let dateTime: Date?
     let date: Date?
     
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        if let dateTimeString = try? container.decode(String.self, forKey: .dateTime) {
-            dateTime = Self.iso8601Formatter.date(from: dateTimeString)
-        } else {
-            dateTime = nil
-        }
-        
-        if let dateString = try? container.decode(String.self, forKey: .date) {
-            date = Self.dateFormatter.date(from: dateString)
-        } else {
-            date = nil
-        }
-    }
-    
+    // MARK: Initialization
+    /// Creates an EventDateTime with optional dateTime and date values
+    /// - Parameters:
+    ///   - dateTime: The date and time of the event
+    ///   - date: The date of an all-day event
     init(dateTime: Date?, date: Date?) {
         self.dateTime = dateTime
         self.date = date
     }
     
-    private static let iso8601Formatter: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter
-    }()
-    
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        return formatter
-    }()
+    init(from decoder: Decoder) throws {
+        // Initialize formatters only when needed for decoding
+        let iso8601Formatter = ISO8601DateFormatter()
+        iso8601Formatter.formatOptions = [.withInternetDateTime]
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.timeZone = .gmt
+        
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        dateTime = try container
+            .decodeIfPresent(String.self, forKey: .dateTime)
+            .flatMap(iso8601Formatter.date)
+        
+        date = try container
+            .decodeIfPresent(String.self, forKey: .date)
+            .flatMap(dateFormatter.date)
+    }
 }
 
+// MARK: - Attendee
+/// Represents an attendee of a calendar event
 struct Attendee: Codable {
     let email: String
     let displayName: String?
@@ -124,23 +131,29 @@ struct Attendee: Codable {
     let resource: Bool?
 }
 
+// MARK: - Conference Data
+/// Represents conference/meeting details for an event
 struct ConferenceData: Codable {
     let conferenceId: String
     let entryPoints: [EntryPoint]?
     let conferenceSolution: ConferenceSolution?
-    
 }
 
+// MARK: - Conference Solution
+/// Represents the solution used for conference (e.g., Google Meet, Zoom)
 struct ConferenceSolution: Codable {
     let key: Key
     let name: String
     let iconUri: String?
 }
 
+/// Represents the type of conference solution
 struct Key: Codable {
     let type: String
 }
 
+// MARK: - Entry Point
+/// Represents how to join a conference (URL, phone number, etc.)
 struct EntryPoint: Codable {
     let entryPointType: String
     let uri: String

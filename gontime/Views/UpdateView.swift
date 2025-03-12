@@ -3,6 +3,7 @@ import SwiftUI
 struct UpdateView: View {
     let updateInfo: UpdateInfo
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -37,8 +38,9 @@ struct UpdateView: View {
                 
                 Button("Update Now") {
                     if let url = URL(string: updateInfo.url) {
-                        NSWorkspace.shared.open(url)
+                        openURL(url)
                         if updateInfo.force {
+                            // Still need AppKit for app termination
                             NSApplication.shared.terminate(nil)
                         }
                     }
@@ -49,9 +51,6 @@ struct UpdateView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(NSColor.windowBackgroundColor)) // Add this line
-
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 }
-
-// End of file

@@ -7,90 +7,73 @@ import Combine
 import Defaults
 import Foundation
 
-protocol MenuBarDecoratorProtocol {
-    func decorateTitle(error: String?, events: [GoogleEvent]) -> String
+/// Generates menu bar title text based on calendar event status and user preferences
+protocol MenuBarTitleGenerator {
+    func generateTitle(error: String?, events: [GoogleEvent]) -> String
 }
 
-final class MenuBarDecorator: MenuBarDecoratorProtocol {
+/// Formats event information into menu bar title text
+/// Handles error states, empty states, and formats event timing with optional title display
+final class MenuBarDecorator: MenuBarTitleGenerator {
+    // MARK: - Constants
+    private enum Constants {
+        static let error = "⚠\u{fef} Calendar error"
+        static let allClear = "All clear"
+        static let untitled = "Untitled Event"
+        static let nextMeeting = "next meeting"
+        static let now = "Now"
+    }
+    
+    // MARK: - Public Interface
+    
+    /// Generates the menu bar title based on current state
+    /// - Parameters:
+    ///   - error: Optional error message indicating calendar access issues
+    ///   - events: Array of upcoming calendar events
+    /// - Returns: Formatted string for display in menu bar
+    func generateTitle(error: String?, events: [GoogleEvent]) -> String {
+        if error != nil { return Constants.error }
+        guard let event = events.first else { return Constants.allClear }
+        
+        return generateEventStatus(for: event)
+    }
+    
     private var cancellables = Set<AnyCancellable>()
     
-    func decorateTitle(error: String?, events: [GoogleEvent]) -> String {
-        if error != nil {
-            return AppConstants.MenuBar.errorTitle
-        }
-        
-        guard let event = events.first else {
-            return AppConstants.MenuBar.allClearTitle
-        }
-        
-        return formatEventTitle(for: event)
-    }
+    // MARK: - Private Methods
     
-    private func formatEventTitle(for event: GoogleEvent) -> String {
-        let showTitle = Defaults[.showEventTitleInMenuBar]
+    /// Formats event status based on timing and user preferences
+    private func generateEventStatus(for event: GoogleEvent) -> String {
+        let title = Defaults[.showEventTitleInMenuBar]
+        ? simplifyTitle(event.summary ?? Constants.untitled)
+        : Constants.nextMeeting
         
-        // First handle the in-progress case since it's special
         if event.isInProgress {
-            return showTitle
-                ? String(format: AppConstants.MenuBar.TimeFormat.withTitle["now"]!,
-                         formatTitle(event))
-                : AppConstants.MenuBar.TimeFormat.now
+            return Defaults[.showEventTitleInMenuBar] ? "\(Constants.now): \(title)" : Constants.now
         }
         
-        // Then handle upcoming events
-        if let timeUntil = event.timeUntilStart {
-            let timeKey = timeUntil.hours > 0 ? "hours" : "minutes"
-            let timeValue = timeUntil.hours > 0 ? timeUntil.hours : timeUntil.minutes
-            
-            if showTitle {
-                return String(
-                    format: AppConstants.MenuBar.TimeFormat.withTitle[timeKey]!,
-                    timeValue,
-                    formatTitle(event)
-                )
-            } else {
-                return String(
-                    format: AppConstants.MenuBar.TimeFormat.noTitle[timeKey]!,
-                    timeValue
-                )
-            }
-        }
-        
-        return AppConstants.MenuBar.allClearTitle
+        guard let timeUntil = event.timeUntilStart else { return Constants.allClear }
+        return timeUntil.hours > 0
+        ? "\(timeUntil.hours)h until \(title)"
+        : "\(timeUntil.minutes)m until \(title)"
     }
     
-    private func formatTitle(_ event: GoogleEvent) -> String {
-        formatTitle(
-            event.summary ?? AppConstants.MenuBar.untitledEvent,
-            truncateLength: Defaults[.truncatedEventTitleLength],
-            simplify: Defaults[.simplifyEventTitles]
-        )
-    }
-    
-    private func formatTitle(_ title: String, truncateLength: Int, simplify: Bool) -> String {
-        var formatted = title
+    /// Simplifies and truncates event title based on user preferences
+    private func simplifyTitle(_ title: String) -> String {
+        var result = title
         
-        if simplify {
-            formatted = formatted.replacingOccurrences(
-                of: AppConstants.Text.bracketsAndParens,
-                with: "",
-                options: .regularExpression
-            )
-            formatted = formatted.replacingOccurrences(
-                of: AppConstants.Text.multipleSpaces,
-                with: " ",
-                options: .regularExpression
-            )
-            formatted = formatted.trimmingCharacters(in: .whitespaces)
+        if Defaults[.simplifyEventTitles] {
+            result = result
+                .replacingOccurrences(of: "\\[.*?\\]|\\(.*?\\)", with: "", options: .regularExpression)
+                .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespaces)
         }
         
-        if formatted.count > truncateLength {
-            let index = formatted.index(formatted.startIndex, offsetBy: truncateLength - 1)
-            formatted = String(formatted[..<index]) + "…"
+        let maxLength = Defaults[.truncatedEventTitleLength]
+        if result.count > maxLength {
+            result = String(result.prefix(maxLength - 1)) + "…"
         }
         
-        return formatted
+        return result
     }
 }
-
-// End of file

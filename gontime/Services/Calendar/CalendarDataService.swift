@@ -1,16 +1,17 @@
-//
-//  GoogleCalendarService.swift
-//  gontime
-//
-//  Created by Tim Feeley on 2/20/25.
-//
-
 import Foundation
 import Defaults
 import GoogleSignIn
 
+/// Service responsible for fetching and filtering Google Calendar events
 final class CalendarDataService {
+    // MARK: - Types
+    
+    private enum Constants {
+        static let defaultBaseURL = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+    }
+    
     // MARK: - Properties
+    
     private static let isoFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
@@ -20,15 +21,14 @@ final class CalendarDataService {
     private let baseURL: String
     private let eventFilter: EventFilterProtocol
     
-    private lazy var components: URLComponents? = {
-        var comps = URLComponents(string: baseURL)
-        comps?.queryItems = buildQueryItems()
-        return comps
-    }()
-    
     // MARK: - Initialization
+    
+    /// Creates a new CalendarDataService instance
+    /// - Parameters:
+    ///   - baseURL: The base URL for the Google Calendar API. Defaults to primary calendar endpoint.
+    ///   - eventFilter: The filter to apply to fetched events. Defaults to DefaultEventFilter.
     init(
-        baseURL: String = "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        baseURL: String = Constants.defaultBaseURL,
         eventFilter: EventFilterProtocol = DefaultEventFilter()
     ) {
         self.baseURL = baseURL
@@ -36,43 +36,69 @@ final class CalendarDataService {
     }
     
     // MARK: - Public Methods
+    
+    /// Fetches and filters calendar events for the current day
+    /// - Returns: An array of filtered GoogleEvent objects
+    /// - Throws: AppError for network, decoding, or request failures
+    @MainActor
     func fetchEvents() async throws -> [GoogleEvent] {
-        guard let components = components, let url = components.url else {
-            throw AppError.request
+        Logger.debug("Fetching events")
+        
+        guard let url = createRequestURL() else {
+            throw AppError.request(URLError(.badURL))
         }
         
-        // Get an authorized session
+        Logger.debug("Fetching from URL: \(url.absoluteString)")
+        
         let session = try await AuthorizationTokenService.createSession()
         let request = URLRequest(url: url)
         
         do {
+            Logger.debug("Making network request")
             let (data, response) = try await session.data(for: request)
             
             guard let httpResponse = response as? HTTPURLResponse else {
-                throw AppError.network(NSError(domain: "HTTP", code: 0))
+                throw AppError.network(URLError(.badServerResponse))
             }
             
-            if !(200...299).contains(httpResponse.statusCode) {
-                throw AppError.network(
-                    NSError(domain: "HTTP", code: httpResponse.statusCode)
-                )
-            }
+            Logger.debug("Received response with status code: \(httpResponse.statusCode)")
             
-            let decodedResponse = try JSONDecoder().decode(GoogleEventsResponse.self, from: data)
-            return eventFilter.filter(decodedResponse.items)
-        } catch let decodingError as DecodingError {
-            throw AppError.decode(decodingError)
-        } catch let error {
+            guard (200...299).contains(httpResponse.statusCode) else {
+                throw AppError.network(URLError(.badServerResponse))
+            }
+            Logger.debug("")
+            let decoder = JSONDecoder()
+            let decodedResponse = try decoder.decode(GoogleEventsResponse.self, from: data)
+            
+            let filteredEvents = eventFilter.filter(decodedResponse.items)
+            Logger.state("Fetched \(decodedResponse.items.count) events, filtered to \(filteredEvents.count)")
+            
+            return filteredEvents
+            
+        } catch let error as DecodingError {
+            throw AppError.decode(error)
+        } catch let error as AppError {
+            throw error
+        } catch {
             throw AppError.network(error)
         }
     }
     
     // MARK: - Private Methods
+    
+    private func createRequestURL() -> URL? {
+        var components = URLComponents(string: baseURL)
+        components?.queryItems = buildQueryItems()
+        return components?.url
+    }
+    
     private func buildQueryItems() -> [URLQueryItem] {
         let now = Date()
         let calendar = Calendar.current
         let endOfDay = calendar.date(
-            bySettingHour: 23, minute: 59, second: 59,
+            bySettingHour: 23,
+            minute: 59,
+            second: 59,
             of: calendar.startOfDay(for: now)
         ) ?? now
         

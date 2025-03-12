@@ -16,6 +16,79 @@ struct SettingsView: View {
     @Default(.simplifyEventTitles) var simplifyEventTitles: Bool
     @Default(.meetingNotificationTime) var meetingNotificationTime: Int?
     
+    // MARK: - View Components
+    @ViewBuilder
+    private var notificationSection: some View {
+        Section {
+            Picker("Meeting notifications", selection: $meetingNotificationTime) {
+                Text("Disabled").tag(nil as Int?)
+                ForEach([1, 2, 5, 10], id: \.self) { minutes in
+                    Text("\(minutes) minutes before").tag(minutes as Int?)
+                }
+            }
+        } header: {
+            Text("Notifications")
+        }
+        .onChange(of: meetingNotificationTime) { _, newValue in
+            handleNotificationChange(to: newValue)
+        }
+    }
+    
+    @ViewBuilder
+    private var eventDisplaySection: some View {
+        Section {
+            Defaults.Toggle(
+                "Show event title in menu bar",
+                key: .showEventTitleInMenuBar)
+            
+            if showEventTitleInMenuBar {
+                EventTitleSettings(
+                    truncatedLength: $truncatedEventTitleLength,
+                    simplifyTitles: $simplifyEventTitles
+                )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var versionFooter: some View {
+        VStack(spacing: 4) {
+            Text("Version \(Bundle.main.appVersionLong)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            if let updateInfo = updateService.updateAvailable {
+                Button("Update available (Version \(String(format: "%.1f", updateInfo.latest)))") {
+                    showingUpdateSheet = true
+                }
+                .buttonStyle(.link)
+                .font(.caption)
+                .foregroundColor(.accentColor)
+                .help("Download the latest version here")
+                .pointerStyle(.link)
+            }
+        }
+        .padding(.top, 10)
+        .frame(maxWidth: .infinity)
+    }
+    
+    // MARK: - Helper Methods
+    private func handleNotificationChange(to newValue: Int?) {
+        guard newValue != nil else { return }
+        
+        Task {
+            do {
+                try await NotificationManager.shared.requestAuthorization()
+            } catch {
+                // Reset the selection if authorization fails
+                await MainActor.run {
+                    meetingNotificationTime = nil
+                }
+                Logger.error("Failed to request notification authorization", error: error)
+            }
+        }
+    }
+    
     var body: some View {
         VStack {
             Form {
@@ -25,12 +98,14 @@ struct SettingsView: View {
                         Section {
                             SignedInUserView(
                                 user: user,
-                                handleSignOut: appState.signOut
+                                handleSignOut: { Task {  appState.signOut() } }
                             )
                         }
                     case .signedOut:
                         Section {
-                            SignedOutUserView(handleSignIn: appState.signIn)
+                            SignedOutUserView(
+                                handleSignIn: { Task { await appState.signIn() } }
+                            )
                         }
                 }
                 
@@ -43,70 +118,14 @@ struct SettingsView: View {
                         key: .ignoreEventsWithoutAttendees)
                 }
                 
-                // Add Notification Settings section before Event Display section
-                Section {
-                    Picker("Meeting notifications", selection: $meetingNotificationTime) {
-                        Text("Disabled").tag(nil as Int?)
-                        ForEach([1, 2, 5, 10], id: \.self) { minutes in
-                            Text("\(minutes) minutes before").tag(minutes as Int?)
-                        }
-                    }
-                    .onChange(of: meetingNotificationTime) { oldValue, newValue in
-                        if oldValue == nil && newValue != nil {
-                            // Request permission when enabling notifications
-                            Task { await NotificationManager.shared.requestAuthorization() }
-                        }
-                    }
-                } header: {
-                    Text("Notifications")
-                }
-                
-                // MARK: - Event Display Settings
-                Section {
-                    Defaults.Toggle(
-                        "Show event title in menu bar",
-                        key: .showEventTitleInMenuBar)
-                    if showEventTitleInMenuBar {
-                        HStack {
-                            Stepper(
-                                value: $truncatedEventTitleLength, in: 10...50
-                            ) {
-                                Text("Limit event title length")
-                            }
-                            Text("\(truncatedEventTitleLength) characters")
-                        }
-                        Toggle(isOn: $simplifyEventTitles) {
-                            Text("Clean up event titles")
-                            Text(
-                                "Removes brackets and parens to simplify titles"
-                            )
-                        }
-                    }
-                    
-                }
+                notificationSection
+                eventDisplaySection
                 
                 // MARK: - Start at login & version
                 Section {
                     LaunchAtLogin.Toggle("Start at login")
                 } footer: {
-                    VStack(spacing: 4) {
-                        Text("Version \(Bundle.main.appVersionLong)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        if let updateInfo = updateService.updateAvailable {
-                            Button("Update available (Version \(String(format: "%.1f", updateInfo.latest)))") {
-                                showingUpdateSheet = true
-                            }
-                            .buttonStyle(.link)
-                            .font(.caption)
-                            .foregroundColor(.accentColor)
-                            .help("Download the latest version here")
-                            .pointerStyle(.link)
-                        }
-                    }
-                    .padding(.top, 10)
-                    .frame(maxWidth: .infinity)
+                    versionFooter
                 }
             }
             .animation(.spring(), value: showEventTitleInMenuBar)
@@ -140,8 +159,30 @@ struct SettingsView: View {
             }
         }
         .windowResizeBehavior(.automatic)
+    }
+}
+
+// MARK: - Supporting Views
+private struct EventTitleSettings: View {
+    @Binding var truncatedLength: Int
+    @Binding var simplifyTitles: Bool
+    
+    var body: some View {
+        HStack {
+            Stepper(
+                value: $truncatedLength, in: 10...50
+            ) {
+                Text("Limit event title length")
+            }
+            Text("\(truncatedLength) characters")
+        }
         
-        
+        Toggle(isOn: $simplifyTitles) {
+            Text("Clean up event titles")
+            Text(
+                "Removes brackets and parens to simplify titles"
+            )
+        }
     }
 }
 

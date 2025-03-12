@@ -19,10 +19,11 @@ struct gontimeApp: App {
     
     @Environment(\.openSettings) private var openSettings
     
+    @MainActor
     init() {
         let openSettingsAction = Environment(\.openSettings).wrappedValue
-
-        Task { @MainActor in
+        
+        Task {
             if await UpdateService.shared.checkForUpdates() {
                 openSettingsAction()
                 NSApplication.shared.activate(ignoringOtherApps: true)
@@ -38,7 +39,11 @@ struct gontimeApp: App {
                         MenuView(isMenuPresented: $isMenuPresented)
                             .environmentObject(appState)
                     } else {
-                        Button("Sign In with Google", action: appState.signIn)
+                        Button("Sign In with Google") {
+                            Task {
+                                await appState.signIn()
+                            }
+                        }
                     }
                     
                     Divider().padding(.vertical, 4)

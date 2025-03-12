@@ -5,42 +5,40 @@ import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
+    // MARK: - Constants
+    private enum Constants {
+        static let defaultTitle = "Calendar"
+        static let signedOutTitle = "All clear"
+    }
+    
     // MARK: - Published State
     @Published private(set) var authState: AuthState = .signedOut {
-        didSet { handleAuthStateChange() }
+        didSet { Task { await handleAuthStateChange() } }
     }
-    @Published private(set) var menuBarTitle: String = AppConstants.MenuBar.defaultTitle
+    
+    @Published private(set) var menuBarTitle: String = Constants.defaultTitle
     @Published private(set) var currentError: AppError? = nil
+    @Published private(set) var events: [GoogleEvent] = []
     
     // MARK: - Private Properties
     private let eventFetcher: EventData
-    private let menuDecorator: MenuBarDecorator
+    private let titleGenerator: MenuBarTitleGenerator
+    private let authenticationService: AuthenticationService
     private var cancellables = Set<AnyCancellable>()
-    
-    // MARK: - Public Properties
-    var events: [GoogleEvent] { eventFetcher.events }
     
     // MARK: - Initialization
     init(
         calendarService: CalendarDataService = CalendarDataService(),
         eventFetcher: EventData? = nil,
-        menuDecorator: MenuBarDecorator = MenuBarDecorator()
+        titleGenerator: MenuBarTitleGenerator = MenuBarDecorator(),
+        authenticationService: AuthenticationService = AuthenticationService()
     ) {
+        Logger.debug("Initializing AppState")
         self.eventFetcher = eventFetcher ?? EventData(calendarService: calendarService)
-        self.menuDecorator = menuDecorator
+        self.titleGenerator = titleGenerator
+        self.authenticationService = authenticationService
         
-        if let user = GIDSignIn.sharedInstance.currentUser {
-            authState = .signedIn(user)
-        } else if GIDSignIn.sharedInstance.hasPreviousSignIn() {
-            GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] user, error in
-                guard let self = self else { return }
-                if let user = user {
-                    self.authState = .signedIn(user)
-                } else if let error = error {
-                    self.handleError(error)
-                }
-            }
-        }
+        setupInitialAuthState()
         setupObservers()
     }
     
@@ -49,91 +47,110 @@ final class AppState: ObservableObject {
         currentError = nil
     }
     
-    func signIn() {
-        AuthenticationService().signIn { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-                case .success(let user):
-                    self.authState = .signedIn(user)
-                    self.clearError()
-                case .failure(let error):
-                    self.handleError(AppError.auth(error))
-            }
+    func signIn() async {
+        do {
+            let user = try await authenticationService.signIn()
+            self.authState = .signedIn(user)
+            self.currentError = nil
+        } catch {
+            self.authState = .signedOut
+            self.currentError = error as? AppError ?? .auth(error)
         }
     }
     
     func signOut() {
         GIDSignIn.sharedInstance.signOut()
         authState = .signedOut
-        clearError()
+        currentError = nil
+        events = []
     }
     
     func refreshEvents() {
         if case .signedIn = authState {
-            eventFetcher.start()
+            Task {
+                do {
+                    eventFetcher.start()
+                    try await eventFetcher.refresh()
+                    self.currentError = nil
+                } catch {
+                    self.currentError = error as? AppError ?? .calendar(error)
+                }
+            }
         } else {
             eventFetcher.stop()
         }
     }
     
     // MARK: - Private Methods
-    private func handleError(_ error: AppError) {
-        currentError = error
-    }
-    
-    private func handleError(_ error: Error) {
-        if let appError = error as? AppError {
-            currentError = appError
-        } else {
-            currentError = .general(error.localizedDescription)
+    private func setupInitialAuthState() {
+        if let user = GIDSignIn.sharedInstance.currentUser {
+            Logger.state("Found existing signed-in user")
+            self.authState = .signedIn(user)
+            return
+        }
+        
+        guard GIDSignIn.sharedInstance.hasPreviousSignIn() else { return }
+        
+        Logger.state("Attempting to restore previous sign-in")
+        Task {
+            do {
+                let user = try await GIDSignIn.sharedInstance.restorePreviousSignInAsync()
+                Logger.state("Successfully restored previous sign-in")
+                self.authState = .signedIn(user)
+            } catch {
+                self.authState = .signedOut
+                self.currentError = error as? AppError ?? .auth(error)
+            }
         }
     }
     
-    private func handleAuthStateChange() {
+    private func handleError(_ error: Error) {
+        self.currentError = error as? AppError ?? .general(error)
+    }
+    
+    private func handleAuthStateChange() async {
+        Logger.state("Auth state changed to: \(authState)")
         switch authState {
             case .signedIn:
+                Logger.debug("Starting event fetcher")
                 eventFetcher.start()
             case .signedOut:
+                Logger.debug("Stopping event fetcher")
                 eventFetcher.stop()
-                menuBarTitle = AppConstants.MenuBar.allClearTitle
+                menuBarTitle = Constants.signedOutTitle
         }
     }
     
     private func setupObservers() {
-        // Event and error changes
-        eventFetcher.objectWillChange
+        Logger.debug("Setting up observers")
+        
+        eventFetcher.$events
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
+            .sink { [weak self] events in
                 guard let self = self else { return }
-                if let errorMessage = self.eventFetcher.error {
-                    self.handleError(AppError.calendar(NSError(
-                        domain: "Calendar",
-                        code: 0,
-                        userInfo: [NSLocalizedDescriptionKey: errorMessage]
-                    )))
-                }
-                self.menuBarTitle = self.menuDecorator.decorateTitle(
-                    error: self.eventFetcher.error,
-                    events: self.eventFetcher.events
-                )
+                self.events = events
+                self.updateMenuBarTitle(events: events, error: self.currentError?.localizedDescription)
             }
             .store(in: &cancellables)
         
-        // Settings changes
         Defaults.publisher(keys: [
             .showEventTitleInMenuBar,
             .truncatedEventTitleLength,
-            .simplifyEventTitles
+            .simplifyEventTitles,
         ])
         .receive(on: DispatchQueue.main)
         .sink { [weak self] _ in
             guard let self = self else { return }
-            self.menuBarTitle = self.menuDecorator.decorateTitle(
-                error: self.eventFetcher.error,
-                events: self.eventFetcher.events
-            )
+            self.updateMenuBarTitle(events: self.events, error: self.currentError?.localizedDescription)
         }
         .store(in: &cancellables)
+    }
+    
+    private func updateMenuBarTitle(events: [GoogleEvent], error: String?) {
+        menuBarTitle = titleGenerator.generateTitle(
+            error: error,
+            events: events
+        )
     }
     
     // MARK: - Auth State

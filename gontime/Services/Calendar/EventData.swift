@@ -7,98 +7,140 @@ import Combine
 import Foundation
 import SwiftUI
 
+/// Manages calendar event data with automatic periodic refreshing.
+/// Handles refreshing data at minute boundaries and when the system wakes from sleep.
 @MainActor
 final class EventData: ObservableObject {
     // MARK: - Published Properties
+    
+    /// The current list of calendar events
     @Published private(set) var events: [GoogleEvent] = []
-    @Published private(set) var error: String? = nil
+    
+    /// Timestamp of the last successful refresh
+    @Published private(set) var lastRefreshDate: Date? = nil
     
     // MARK: - Private Properties
-    private var timerTask: Task<Void, Never>?
+    private var refreshTimer: AnyCancellable?
     private let calendarService: CalendarDataService
     private var isActive = false
     private var workspaceNotificationObserver: NSObjectProtocol?
     private let notificationManager = NotificationManager.shared
     
+    // MARK: - Constants
+    
+    private enum Constants {
+        static let refreshInterval: TimeInterval = 60
+    }
+    
+    // MARK: - Lifecycle
+    
+    /// Initializes the event data manager with the specified calendar service
+    /// - Parameter calendarService: The service used to fetch calendar data
     init(calendarService: CalendarDataService) {
+        Logger.debug("Initializing EventData")
         self.calendarService = calendarService
         setupWakeObserver()
     }
     
-    func start() {
-        isActive = true
-        Task {
-            await refresh()
-            startTimer()
+    /// Performs cleanup when the instance is deallocated
+    deinit {
+        // Note: We must use Task with @MainActor to safely access actor-isolated properties during deinit
+        Task { @MainActor [weak self] in
+            self?.cleanup()
         }
     }
     
-    func stop() {
-        isActive = false
-        stopTimer()
+    // MARK: - Public Methods
+    
+    /// Starts monitoring events with periodic refreshes at minute boundaries
+    func start() {
+        Logger.debug("Starting EventData")
+        isActive = true
+        Task {
+            await refreshAndStartTimer()
+        }
     }
     
-    func refresh() async {
+    /// Stops event monitoring and cancels any pending refresh
+    func stop() {
+        Logger.debug("Stopping EventData")
+        isActive = false
+        cancelRefreshTimer()
+    }
+    
+    /// Manually refreshes event data from the calendar service
+    func refresh() async throws {
+        Logger.debug("Starting refresh")
         do {
-            events = try await calendarService.fetchEvents()
-            error = nil
+            let fetchedEvents = try await calendarService.fetchEvents()
+            Logger.state("Fetched \(fetchedEvents.count) events")
+            events = fetchedEvents
+            lastRefreshDate = Date()
+            await notificationManager.checkEventsForNotifications(events)
         } catch {
-            self.error = error.localizedDescription
-            events = []
+            // Error was already logged in service layer
+            self.events = []
+            throw error as? AppError ?? .calendar(error)
         }
     }
     
     // MARK: - Private Methods
-    private func startTimer() {
-        stopTimer()
-        guard isActive else { return }
+    
+    private func startRefreshTimer() {
+        Logger.debug("Starting refresh timer")
+        cancelRefreshTimer()
+        guard isActive else {
+            Logger.debug("Not starting refresh timer - EventData inactive")
+            return
+        }
         
-        timerTask = Task { @MainActor [weak self] in
-            repeat {
-                guard let self else { break }
-                
-                let calendar = Calendar.current
-                let second = calendar.component(.second, from: Date())
-                
-                if second == 59 {
-                    await self.refresh()
-                    await self.notificationManager.checkEventsForNotifications(self.events)
+        // Simple refresh every minute to keep event data current
+        refreshTimer = Timer.publish(every: Constants.refreshInterval, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                guard let self = self, self.isActive else { return }
+                Task { @MainActor [weak self] in
+                    try? await self?.refresh()
                 }
-                
-                // Check if we should continue before sleeping
-                if !self.isActive || Task.isCancelled { break }
-                
-                try? await Task.sleep(for: .seconds(1))
-            } while true
+            }
+        
+        // Initial refresh to ensure we're up to date
+        Task { @MainActor [weak self] in
+            try? await self?.refresh()
         }
     }
     
-    private func stopTimer() {
-        timerTask?.cancel()
-        timerTask = nil
+    private func refreshAndStartTimer() async {
+        try? await refresh()
+        startRefreshTimer()
     }
     
+    private func cleanup() {
+        Logger.debug("EventData deinitializing")
+        cancelRefreshTimer()
+        if let observer = workspaceNotificationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
+    }
+    
+    private func cancelRefreshTimer() {
+        refreshTimer?.cancel()
+        refreshTimer = nil
+    }
+    
+    /// Sets up an observer to detect when the system wakes from sleep
     private func setupWakeObserver() {
+        Logger.debug("Setting up system wake observer")
         workspaceNotificationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
-                guard let self else { return }
-                if self.isActive {
-                    await self.refresh()
-                    self.startTimer()
-                }
+                guard let self = self, self.isActive else { return }
+                Logger.state("System woke from sleep - refreshing data")
+                await self.refreshAndStartTimer()
             }
-        }
-    }
-    
-    deinit {
-        timerTask?.cancel()
-        timerTask = nil
-        if let observer = workspaceNotificationObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
     }
 }

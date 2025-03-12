@@ -6,7 +6,11 @@
 import Foundation
 import GoogleSignIn
 
-class AuthorizationTokenService {
+/// Service responsible for creating authenticated URLSessions using Google Sign-In tokens
+final class AuthorizationTokenService {
+    /// Creates a URLSession configured with the current user's access token
+    /// - Returns: A configured URLSession with authentication headers
+    /// - Throws: AppError.auth if token refresh fails or no access token is available
     static func createSession() async throws -> URLSession {
         try await withCheckedThrowingContinuation { continuation in
             GIDSignIn.sharedInstance.currentUser?.refreshTokensIfNeeded { user, error in

@@ -14,11 +14,13 @@ struct MenuView: View {
     @Binding var isMenuPresented: Bool
     
     var body: some View {
-        VStack {
+        VStack(alignment: .leading, spacing: 8) {
             if appState.events.isEmpty {
-                Text("No upcoming events today").foregroundColor(.secondary).padding()
-            }
-            else {
+                Text("No upcoming events today")
+                    .foregroundColor(.secondary)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+            } else {
                 ForEach(appState.events) { event in
                     EventRow(event: event)
                 }
@@ -26,7 +28,6 @@ struct MenuView: View {
         }
     }
 }
-
 
 #Preview {
     MenuView(isMenuPresented: .constant(true))

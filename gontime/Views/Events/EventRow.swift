@@ -10,8 +10,10 @@ import SwiftUI
 
 struct EventRow: View {
     
-    static let spacing: CGFloat = 12
-
+    private enum Constants {
+        static let spacing: CGFloat = 12
+    }
+    
     let event: GoogleEvent
     
     @Environment(\.isFocused) var isFocused
@@ -20,57 +22,76 @@ struct EventRow: View {
     
     var body: some View {
         Button(action: { NSWorkspace.shared.open(event.htmlLink) }) {
-            HStack(spacing: EventRow.spacing) {
+            HStack(spacing: Constants.spacing) {
                 
                 // Time
-                HStack {
-                    Text(formattedTimeText)
-                        .font(.subheadline)
-                        .foregroundStyle(
-                            event.timeUntilEnd != nil
-                            ? Color.accentColor : .primary
-                        )
-                        .background(timeWidthReader)
-                }
-                .alignmentGuide(.timeAlignmentGuide) { $0[.trailing] }
-                .frame(minWidth: timeColumnWidth, alignment: .trailing)
+                timeColumn
                 
                 // Meeting title
-                Text(event.summary ?? "Unnamed event")
-                    .font(.subheadline)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                titleColumn
                 
                 Spacer()
                 
                 // Join conference
-                if let conference = event.conferenceData,
-                   let entryPoint = conference.entryPoints?.first(where: {
-                       $0.entryPointType == "video"
-                   }),
-                   let solution = conference.conferenceSolution
-                {
-                    EventConferenceLink(
-                        uri: entryPoint.uri,
-                        solution: solution,
-                        isInProgress: event.isInProgress
-                    )
-                }
+                conferenceLink
                 
                 // Open event
-                Link(destination: event.htmlLink) {
-                    Image(systemName: "chevron.right.circle")
-                        .foregroundColor(.secondary)
-                }
-                .help("Open in Calendar")
-                .buttonStyle(.plain)
-                .focusable()
+                calendarLink
             }
         }
         .buttonStyle(.hover)
         .focusable()
     }
     
+    // MARK: - Subviews
+    private var timeColumn: some View {
+        HStack {
+            Text(formattedTimeText)
+                .font(.subheadline)
+                .foregroundStyle(
+                    event.timeUntilEnd != nil
+                    ? Color.accentColor : .primary
+                )
+                .background(timeWidthReader)
+        }
+        .alignmentGuide(.timeAlignmentGuide) { $0[.trailing] }
+        .frame(minWidth: timeColumnWidth, alignment: .trailing)
+    }
+    
+    private var titleColumn: some View {
+        Text(event.summary ?? "Unnamed event")
+            .font(.subheadline)
+            .lineLimit(1)
+            .truncationMode(.tail)
+    }
+    
+    @ViewBuilder
+    private var conferenceLink: some View {
+        if let conference = event.conferenceData,
+           let entryPoint = conference.entryPoints?.first(where: {
+               $0.entryPointType == "video"
+           }),
+           let solution = conference.conferenceSolution
+        {
+            EventConferenceLink(
+                uri: entryPoint.uri,
+                solution: solution,
+                isInProgress: event.isInProgress
+            )
+        }
+    }
+    
+    private var calendarLink: some View {
+        Link(destination: event.htmlLink) {
+            Image(systemName: "chevron.right.circle")
+                .foregroundColor(.secondary)
+        }
+        .help("Open in Calendar")
+        .buttonStyle(.plain)
+        .focusable()
+    }
+    
+    // MARK: - Helper Views and Methods
     private var timeWidthReader: some View {
         GeometryReader { geometry in
             Color.clear.preference(
