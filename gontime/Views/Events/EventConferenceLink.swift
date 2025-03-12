@@ -14,6 +14,8 @@ import SwiftUI
 /// Displays a clickable conference link with provider icon or name
 struct EventConferenceLink: View {
 
+  @Environment(\.openURL) private var openURL
+
   // MARK: - Constants
 
   private enum Constants {
@@ -30,13 +32,15 @@ struct EventConferenceLink: View {
   // MARK: - View Body
 
   var body: some View {
-    Link(destination: URL(string: uri)!) {
+    Button {
+      openURL(URL(string: uri)!)
+    } label: {
       conferenceIcon
     }
     .help("Join \(solution.name)")
     .focusable()
     .buttonBorderShape(.roundedRectangle)
-    .buttonStyle(.accessoryBar)
+    .buttonStyle(for: isInProgress)
     .opacity(isInProgress ? 1.0 : 0.6)
     .padding(.trailing, Constants.trailingPadding)
   }

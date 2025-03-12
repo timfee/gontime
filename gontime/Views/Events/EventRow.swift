@@ -43,7 +43,19 @@ struct EventRow: View {
         .font(.subheadline)
         .foregroundStyle(
           event.timeUntilEnd != nil
-            ? Color.accentColor : .primary
+            ? .white : .primary
+        )
+        .padding(.horizontal, 8)
+        .padding(.vertical, 2)
+        .background(
+          Group {
+            if event.timeUntilEnd != nil {
+              Capsule()
+                .fill(Color.accentColor)
+            } else {
+              Color.clear
+            }
+          }
         )
         .background(timeWidthReader)
     }
@@ -122,7 +134,7 @@ struct EventRow: View {
   @Previewable @State var timeColumnWidth: CGFloat = 0
   return VStack(spacing: 0) {
     VStack(alignment: .timeAlignmentGuide, spacing: 0) {
-      EventMockData()
+      EventMockData().allowsHitTesting(false)
     }
     .onPreferenceChange(TimeWidthPreferenceKey.self) { width in
       timeColumnWidth = width

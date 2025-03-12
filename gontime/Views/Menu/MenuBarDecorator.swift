@@ -60,7 +60,7 @@ final class MenuBarDecorator: MenuBarTitleGenerator {
 
     guard let timeUntil = event.timeUntilStart else { return Constants.allClear }
     return timeUntil.hours > 0
-      ? "\(timeUntil.hours)h until \(title)"
+      ? "\(timeUntil.hours)h+ until \(title)"
       : "\(timeUntil.minutes)m until \(title)"
   }
 

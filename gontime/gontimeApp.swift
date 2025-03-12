@@ -66,9 +66,12 @@ struct gontimeApp: App {
           .padding(.top, 8)
       },
       label: {
-        Text(
-          appState.currentError != nil
-            ? "⚠️\u{fe0f} Calendar error" : appState.menuBarTitle)
+        HStack {
+          Image(systemName: "calendar.badge.clock")
+          Text(
+            appState.currentError != nil
+              ? "⚠️\u{fe0f} Calendar error" : appState.menuBarTitle)
+        }
       }
     )
     .menuBarExtraStyle(.window)
