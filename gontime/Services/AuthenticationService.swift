@@ -11,43 +11,59 @@ import Foundation
 import GoogleSignIn
 
 final class AuthenticationService {
-  private let calendarScope =
-    "https://www.googleapis.com/auth/calendar.readonly"
-  @MainActor
-  func signIn() async throws -> GIDGoogleUser {
-    guard let keyWindow = NSApplication.shared.keyWindow else {
-      throw AppError.auth(
-        makeError(
-          code: -1,
-          description: "No window available for sign in"
-        ))
-    }
-    return try await withCheckedThrowingContinuation { continuation in
-      GIDSignIn.sharedInstance.signIn(
-        withPresenting: keyWindow
-      ) { result, error in
-        if let error = error {
-          continuation.resume(throwing: AppError.auth(error))
-          return
+    // MARK: - Constants
+    private let calendarScope =
+        "https://www.googleapis.com/auth/calendar.readonly"
+
+    // MARK: - Authentication
+    func signIn(completion: @escaping (Result<GIDGoogleUser, Error>) -> Void) {
+        guard let presentingWindow = NSApplication.shared.windows.first else {
+            completion(
+                .failure(AppError.general("No presenting window found!")))
+            return
         }
-        guard let user = result?.user else {
-          continuation.resume(
-            throwing: AppError.auth(
-              self.makeError(
-                code: -1,
-                description: "Failed to get user from sign in"
-              )))
-          return
+
+        GIDSignIn.sharedInstance.signIn(
+            withPresenting: presentingWindow,
+            hint: nil,
+            additionalScopes: [calendarScope]
+        ) { result, error in
+            if let error = error as NSError?,
+                error.code == GIDSignInError.canceled.rawValue
+            {
+                completion(
+                    .failure(
+                        AppError.auth(
+                            NSError(
+                                domain: "SignIn",
+                                code: -2,
+                                userInfo: [
+                                    NSLocalizedDescriptionKey:
+                                        "Sign-in was cancelled by the user."
+                                ]
+                            ))))
+                return
+            }
+
+            guard let result = result,
+                let grantedScopes = result.user.grantedScopes,
+                grantedScopes.contains(self.calendarScope)
+            else {
+                completion(
+                    .failure(
+                        AppError.auth(
+                            NSError(
+                                domain: "SignIn",
+                                code: -3,
+                                userInfo: [
+                                    NSLocalizedDescriptionKey:
+                                        "Calendar permission was not granted."
+                                ]
+                            ))))
+                return
+            }
+
+            completion(.success(result.user))
         }
-        continuation.resume(returning: user)
-      }
     }
-  }
-  private func makeError(code: Int, description: String) -> NSError {
-    NSError(
-      domain: "Auth",
-      code: code,
-      userInfo: [NSLocalizedDescriptionKey: description]
-    )
-  }
 }
