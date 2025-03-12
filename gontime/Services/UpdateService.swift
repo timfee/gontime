@@ -11,6 +11,38 @@ import Foundation
 import SwiftUI
 import os.log
 
+// MARK: - GitHub API Error
+
+enum GitHubAPIError: LocalizedError {
+  case rateLimitExceeded
+  case invalidResponse
+
+  var errorDescription: String? {
+    switch self {
+    case .rateLimitExceeded:
+      return "GitHub API rate limit exceeded. Please try again later."
+    case .invalidResponse:
+      return "Unable to fetch update information."
+    }
+  }
+}
+
+// MARK: - GitHub Release Response Models
+
+struct GitHubRelease: Codable {
+  let tagName: String
+  let body: String
+  let htmlUrl: String
+  let prerelease: Bool
+
+  enum CodingKeys: String, CodingKey {
+    case tagName = "tag_name"
+    case body
+    case htmlUrl = "html_url"
+    case prerelease
+  }
+}
+
 // MARK: - Update Information Model
 
 /// Represents version update information from remote source
@@ -38,8 +70,8 @@ final class UpdateService: ObservableObject {
 
   // MARK: - Private Properties
 
-  private let updateURL = URL(
-    string: "https://raw.githubusercontent.com/timfee/gontime_updates/refs/heads/main/version.json")!
+  private let apiURL = URL(
+    string: "https://api.github.com/repos/timfee/gontime_updates/releases/latest")!
 
   private init() {}
 
@@ -50,17 +82,46 @@ final class UpdateService: ObservableObject {
 
   func checkForUpdates() async -> Bool {
     do {
-      let (data, _) = try await URLSession.shared.data(from: updateURL)
-      let updateInfo = try JSONDecoder().decode(UpdateInfo.self, from: data)
+      var request = URLRequest(url: apiURL)
+      request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+      request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+      request.setValue("Gontime/\(Bundle.main.appVersionLong)", forHTTPHeaderField: "User-Agent")
+
+      let (data, response) = try await URLSession.shared.data(for: request)
+
+      guard let httpResponse = response as? HTTPURLResponse else {
+        throw GitHubAPIError.invalidResponse
+      }
+
+      // Log the raw response for debugging
+      let responseString = String(data: data, encoding: .utf8)
+
+      guard httpResponse.statusCode == 200 else {
+        Logger.error("HTTP error: \(httpResponse.statusCode)")
+        throw GitHubAPIError.invalidResponse
+      }
+
+      let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
       let currentVersion = Double(Bundle.main.appVersionLong) ?? 0.0
-      let hasUpdate = updateInfo.latest > currentVersion
+
+      let versionString = release.tagName.trimmingCharacters(in: CharacterSet(charactersIn: "v"))
+      guard let latestVersion = Double(versionString) else {
+        Logger.error("Invalid version format: \(release.tagName)")
+        return false
+      }
+
+      let hasUpdate = latestVersion > currentVersion
 
       if hasUpdate {
-        Logger.state("Update available: \(updateInfo.latest) (current: \(currentVersion))")
-        self.updateAvailable = updateInfo
+        Logger.state("Update available: \(latestVersion) (current: \(currentVersion))")
+        self.updateAvailable = UpdateInfo(
+          latest: latestVersion,
+          message: release.body,
+          url: release.htmlUrl,
+          force: release.prerelease
+        )
       } else {
-        Logger.debug(
-          "No update available (current: \(currentVersion), latest: \(updateInfo.latest))")
+        Logger.debug("No update available (current: \(currentVersion), latest: \(latestVersion))")
       }
 
       return hasUpdate
