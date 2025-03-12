@@ -1,19 +1,17 @@
 //
-//  TimeWidthPreferenceKey.swift
-//  gontime
+//  Extensions/TimeWidthPreferenceKey+Extension.swift
+//  gOnTime
 //
-//  Created by Tim Feeley on 2/22/25.
+//  Copyright 2025 Google LLC
+//
+//  Author: timfee@ (Tim Feeley)
 //
 
 import SwiftUI
 
-/// PreferenceKey for managing time width measurements in views
 struct TimeWidthPreferenceKey: PreferenceKey {
-    /// Default width value
-    static var defaultValue: CGFloat = 0
-    
-    /// Combines multiple width values by taking the maximum
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
+  static var defaultValue: CGFloat = 0
+  static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+    value = max(value, nextValue())
+  }
 }

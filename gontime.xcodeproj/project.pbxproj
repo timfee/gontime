@@ -30,22 +30,11 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		E848A5532D811D5500002F6C /* Exceptions for "gontime" folder in "Compile Sources" phase from "gontime" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = E8F399592D67B01900EA45B1 /* Sources */;
-			membershipExceptions = (
-				clean.sh,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E8F3995F2D67B01900EA45B1 /* gontime */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				E8F399872D67C8AB00EA45B1 /* Exceptions for "gontime" folder in "gontime" target */,
-				E848A5532D811D5500002F6C /* Exceptions for "gontime" folder in "Compile Sources" phase from "gontime" target */,
 			);
 			path = gontime;
 			sourceTree = "<group>";

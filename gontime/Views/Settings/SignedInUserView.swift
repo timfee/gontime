@@ -1,45 +1,57 @@
 //
-//  SignedInUserView.swift
-//  gontime
+//  Views/Settings/SignedInUserView.swift
+//  gOnTime
 //
-//  Created by Tim Feeley on 2/21/25.
+//  Copyright 2025 Google LLC
+//
+//  Author: timfee@ (Tim Feeley)
 //
 
 import GoogleSignIn
 import SwiftUI
 
 struct SignedInUserView: View {
-    let user: GIDGoogleUser
-    let handleSignOut: () -> Void
-    
-    var body: some View {
-        HStack {
-            if let imageURL = user.profile?.imageURL(withDimension: 64) {
-                AsyncImage(url: imageURL) { image in
-                    image.resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .clipShape(Circle())
-                } placeholder: {
-                    Image(systemName: "person.circle")
-                }
-                .frame(width: 40, height: 40)
-            } else {
-                Image(systemName: "person.circle")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 40, height: 40)
-            }
-            
-            VStack(alignment: .leading) {
-                Text(user.profile?.name ?? "Unknown")
-                    .font(.headline)
-                Text(user.profile?.email ?? "Unknown")
-                    .font(.subheadline)
-            }
-            
-            Spacer()
-            
-            Button("Sign out", action: handleSignOut)
-        }
+  let user: GIDGoogleUser
+  let handleSignOut: () -> Void
+  var body: some View {
+    HStack {
+      userAvatar
+      userInfo
+      Spacer()
+      signOutButton
     }
+  }
+  @ViewBuilder
+  private var userAvatar: some View {
+    Group {
+      if let imageURL = user.profile?.imageURL(withDimension: 64) {
+        AsyncImage(url: imageURL) { image in
+          image.resizable()
+            .aspectRatio(contentMode: .fit)
+            .clipShape(Circle())
+        } placeholder: {
+          defaultAvatar
+        }
+      } else {
+        defaultAvatar
+      }
+    }
+    .frame(width: 40, height: 40)
+  }
+  private var defaultAvatar: some View {
+    Image(systemName: "person.circle")
+      .resizable()
+      .aspectRatio(contentMode: .fit)
+  }
+  private var userInfo: some View {
+    VStack(alignment: .leading) {
+      Text(user.profile?.name ?? "Unknown")
+        .font(.headline)
+      Text(user.profile?.email ?? "Unknown")
+        .font(.subheadline)
+    }
+  }
+  private var signOutButton: some View {
+    Button("Sign out", action: handleSignOut)
+  }
 }

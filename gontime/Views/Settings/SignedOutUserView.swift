@@ -1,21 +1,22 @@
 //
-//  SignedOutUserView.swift
-//  gontime
+//  Views/Settings/SignedOutUserView.swift
+//  gOnTime
 //
-//  Created by Tim Feeley on 2/21/25.
+//  Copyright 2025 Google LLC
+//
+//  Author: timfee@ (Tim Feeley)
 //
 
 import SwiftUI
 
 struct SignedOutUserView: View {
-    let handleSignIn: () -> Void
-    
-    var body: some View {
-        HStack {
-            Text("Not signed in")
-                .foregroundStyle(.secondary)
-            Spacer()
-            Button("Sign in", action: handleSignIn)
-        }
+  let handleSignIn: () -> Void
+  var body: some View {
+    HStack {
+      Text("Not signed in")
+        .foregroundStyle(.secondary)
+      Spacer()
+      Button("Sign in", action: handleSignIn)
     }
+  }
 }
