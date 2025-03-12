@@ -1,6 +1,6 @@
 //
 //  EventMockData.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -10,6 +10,7 @@
 import SwiftUI
 
 /// Provides mock data for events to be used in previews or testing.
+
 struct EventMockData: View {
 
   // MARK: - Constants

@@ -1,6 +1,6 @@
 //
 //  EventFilter.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -14,6 +14,7 @@ import Foundation
 
 /// Defines interface for filtering calendar events
 protocol EventFilterProtocol {
+
   func filter(_ events: [GoogleEvent]) -> [GoogleEvent]
 }
 
@@ -22,6 +23,7 @@ protocol EventFilterProtocol {
 /// Implements standard event filtering based on user preferences
 
 struct DefaultEventFilter: EventFilterProtocol {
+
   func filter(_ events: [GoogleEvent]) -> [GoogleEvent] {
     events.filter { event in
       // Skip full-day events if configured

@@ -1,6 +1,6 @@
 //
 //  EventConferenceLink.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -12,6 +12,7 @@ import SwiftUI
 // MARK: - Conference Link View
 
 /// Displays a clickable conference link with provider icon or name
+
 struct EventConferenceLink: View {
 
   @Environment(\.openURL) private var openURL

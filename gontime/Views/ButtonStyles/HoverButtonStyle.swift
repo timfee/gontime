@@ -1,6 +1,6 @@
 //
 //  HoverButtonStyle.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -10,6 +10,7 @@
 import SwiftUI
 
 /// A button style that provides visual feedback for hover and focus states
+
 struct HoverButtonStyle: ButtonStyle {
 
   // MARK: - Constants

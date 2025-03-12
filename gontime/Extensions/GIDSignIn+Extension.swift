@@ -1,6 +1,6 @@
 //
 //  GIDSignIn+Extension.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -15,6 +15,7 @@ extension GIDSignIn {
   /// - Returns: The restored Google user if available
   /// - Throws: AppError.auth if restoration fails or no user is found
   @MainActor
+
   func restorePreviousSignInAsync() async throws -> GIDGoogleUser {
     try await withCheckedThrowingContinuation { continuation in
       self.restorePreviousSignIn { user, error in

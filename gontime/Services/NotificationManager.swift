@@ -1,6 +1,6 @@
 //
 //  NotificationManager.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -33,6 +33,7 @@ final class NotificationManager {
 
   /// Requests notification authorization if not already granted
   @MainActor
+
   func requestAuthorization() async throws {
     guard !hasRequestedPermission else { return }
     hasRequestedPermission = true
@@ -42,6 +43,7 @@ final class NotificationManager {
 
   /// Evaluates events and schedules notifications as needed
   @MainActor
+
   func checkEventsForNotifications(_ events: [GoogleEvent]) async {
     do {
       guard let minutes = Defaults[.meetingNotificationTime],

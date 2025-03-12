@@ -1,6 +1,6 @@
 //
 //  MenuView.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -12,6 +12,7 @@ import SwiftUI
 // MARK: - Menu View
 
 /// Main menu view displaying event list or empty state
+
 struct MenuView: View {
 
   // MARK: - Properties

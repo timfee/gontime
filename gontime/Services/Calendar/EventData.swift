@@ -1,6 +1,6 @@
 //
 //  EventData.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -50,6 +50,7 @@ final class EventData: ObservableObject {
   // MARK: - Public Methods
 
   /// Starts event monitoring and refresh timer
+
   func start() {
     Logger.debug("Starting EventData")
     isActive = true
@@ -60,6 +61,7 @@ final class EventData: ObservableObject {
   }
 
   /// Stops event monitoring and cleanup
+
   func stop() {
     Logger.debug("Stopping EventData")
     isActive = false
@@ -68,6 +70,7 @@ final class EventData: ObservableObject {
 
   /// Manually refreshes events
   /// - Throws: AppError if refresh fails
+
   func refresh() async throws {
     Logger.debug("Starting refresh")
     do {

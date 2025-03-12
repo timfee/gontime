@@ -1,6 +1,6 @@
 //
 //  ConferenceButtonStyle.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -11,6 +11,7 @@ import SwiftUI
 
 extension View {
   @ViewBuilder
+
   func buttonStyle(for isInProgress: Bool) -> some View {
     switch isInProgress {
     case true:

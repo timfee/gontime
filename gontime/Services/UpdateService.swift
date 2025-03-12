@@ -1,6 +1,6 @@
 //
 //  UpdateService.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -47,6 +47,7 @@ final class UpdateService: ObservableObject {
 
   /// Checks for available updates
   /// - Returns: Boolean indicating if an update is available
+
   func checkForUpdates() async -> Bool {
     do {
       let (data, _) = try await URLSession.shared.data(from: updateURL)

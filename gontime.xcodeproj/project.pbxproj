@@ -23,7 +23,6 @@
 		E8F399872D67C8AB00EA45B1 /* Exceptions for "gontime" folder in "gontime" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				clean.py,
 				Info.plist,
 			);
 			target = E8F3995C2D67B01900EA45B1 /* gontime */;
@@ -115,6 +114,7 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
+				ORGANIZATIONNAME = Google;
 				TargetAttributes = {
 					E8F3995C2D67B01900EA45B1 = {
 						CreatedOnToolsVersion = 16.2;
@@ -173,7 +173,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n";
+			shellScript = "#!/bin/bash\n\nPYTHON=$(which python3 || which python)\nif [ -z \"$PYTHON\" ]; then\n    echo \"Python not found. Please install Python to continue.\"\n    exit 1\nfi\n\n\"$PYTHON\" - \"$SRCROOT\" \"$PROJECT_NAME\" \"$USER\" <<'EOF'\nimport os\nimport sys\nimport subprocess\nimport re\nimport datetime\n\nsrc_root = sys.argv[1]\nproject_name = sys.argv[2]\nuser = sys.argv[3]\ncurrent_year = datetime.datetime.now().year\n\n\ndef process_swift_file(file_path, author_email):\n    with open(file_path, 'r') as f:\n        lines = f.readlines()\n\n    lines = remove_leading_comments(lines)\n    lines = add_header(lines, file_path, project_name, author_email)\n    lines = remove_trailing_comments(lines)\n    lines = handle_mark_spacing(lines)\n    lines = handle_doc_comments(lines)\n    lines = handle_function_struct_class_spacing(lines)\n    lines = handle_brace_spacing(lines)\n\n    with open(file_path, 'w') as f:\n        f.writelines(lines)\n\n    subprocess.run(['swift-format', '-i', file_path])\n\n    print(f\"Processed: {os.path.relpath(file_path, src_root)}\")\n\n\ndef extract_author(lines, default_email):\n    author_pattern = re.compile(r'^//\\s*Author:\\s*(.+)$')\n    for line in lines[:10]:  # Check first 10 lines for author\n        match = author_pattern.match(line)\n        if match:\n            return match.group(1).strip()\n    return default_email\n\n\ndef remove_leading_comments(lines):\n    i = 0\n    while i < len(lines) and (lines[i].strip().startswith('//') or lines[i].strip() == ''):\n        i += 1\n    return lines[i:]\n\n\ndef add_header(lines, file_path, project_name, author_email):\n    filename = os.path.basename(file_path)\n    current_year = datetime.datetime.now().year\n    header = [\n        '//\\n',\n        f'//  {filename}\\n',\n        f'//  {project_name}\\n',\n        '//\\n',\n        f'//  Copyright {current_year} Google LLC\\n',\n        '//\\n',\n        f'//  Author: {author_email}\\n',\n        '//\\n\\n',\n    ]\n    return header + lines\n\n\ndef remove_trailing_comments(lines):\n    while lines and (lines[-1].strip().startswith('//') or lines[-1].strip() == ''):\n        lines.pop()\n    return lines\n\n\ndef handle_mark_spacing(lines):\n    output = []\n    for i, line in enumerate(lines):\n        if line.strip().startswith(\"// MARK: -\"):\n            if output and output[-1].strip() != \"\":\n                output.append(\"\\n\")\n            output.append(line)\n        else:\n            output.append(line)\n    return output\n\n\ndef handle_doc_comments(lines):\n    output = []\n    in_doc_comment = False\n    for line in lines:\n        if line.strip().startswith(\"///\"):\n            if not in_doc_comment and output and output[-1].strip() != \"\":\n                output.append(\"\\n\")\n            in_doc_comment = True\n            output.append(line)\n        else:\n            in_doc_comment = False\n            output.append(line)\n    return output\n\n\ndef handle_function_struct_class_spacing(lines):\n    output = []\n    for line in lines:\n        if re.match(r'^\\s*(func|struct|class)\\s', line):\n            if output and output[-1].strip() != \"\":\n                output.append(\"\\n\")\n        output.append(line)\n    return output\n\n\ndef handle_brace_spacing(lines):\n    output = []\n    for line in lines:\n        if line.strip() == \"{\" and output:\n            if output[-1].strip() == \"\":\n                output.pop()\n            output.append(\" {\\n\")\n        else:\n            output.append(line)\n    return output\n\n\nif __name__ == \"__main__\":\n    default_email = f\"{user}@google.com\"\n    swift_files_found = False\n    exclude_dirs = {'.git', '.xcproj'}\n\n    for root, dirs, files in os.walk(src_root):\n        dirs[:] = [d for d in dirs if d not in exclude_dirs]\n        for filename in files:\n            if filename.endswith(\".swift\"):\n                swift_files_found = True\n                file_path = os.path.join(root, filename)\n                with open(file_path, 'r') as f:\n                    original_lines = f.readlines()\n                author_email = extract_author(original_lines, default_email)\n                process_swift_file(file_path, author_email)\n\n    if swift_files_found:\n        print(\"Finished processing all Swift files.\")\n        sys.exit(0)  # success\n    else:\n        print(\"No Swift files found to process.\")\n        sys.exit(1)  # warning/error condition\nEOF\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -321,6 +321,7 @@
 				DEVELOPMENT_TEAM = Q46ZBWXXXL;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = gontime/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = gOnTime;
@@ -353,6 +354,7 @@
 				DEVELOPMENT_TEAM = Q46ZBWXXXL;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = gontime/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = gOnTime;

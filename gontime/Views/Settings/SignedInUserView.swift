@@ -1,6 +1,6 @@
 //
 //  SignedInUserView.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -13,6 +13,7 @@ import SwiftUI
 // MARK: - Signed In User View
 
 /// Displays authenticated user information and sign-out option
+
 struct SignedInUserView: View {
 
   // MARK: - Properties

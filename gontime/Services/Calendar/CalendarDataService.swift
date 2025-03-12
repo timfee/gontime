@@ -1,6 +1,6 @@
 //
 //  CalendarDataService.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -48,6 +48,7 @@ final class CalendarDataService {
   /// - Returns: Array of filtered GoogleEvent objects
   /// - Throws: AppError for network, decoding, or authorization failures
   @MainActor
+
   func fetchEvents() async throws -> [GoogleEvent] {
     Logger.debug("Fetching events")
 

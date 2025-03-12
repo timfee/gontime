@@ -1,6 +1,6 @@
 //
 //  AuthenticationService.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
@@ -24,6 +24,7 @@ final class AuthenticationService {
   /// - Returns: Authenticated Google user
   /// - Throws: AppError.auth if sign-in fails or no window is available
   @MainActor
+
   func signIn() async throws -> GIDGoogleUser {
     guard let keyWindow = NSApplication.shared.keyWindow else {
       throw AppError.auth(

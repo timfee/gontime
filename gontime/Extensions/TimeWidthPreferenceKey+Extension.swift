@@ -1,6 +1,6 @@
 //
 //  TimeWidthPreferenceKey+Extension.swift
-//  gOnTime
+//  gontime
 //
 //  Copyright 2025 Google LLC
 //
