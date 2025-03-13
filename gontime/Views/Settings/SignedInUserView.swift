@@ -13,7 +13,6 @@ import SwiftUI
 // MARK: - Signed In User View
 
 /// Displays authenticated user information and sign-out option
-
 struct SignedInUserView: View {
 
   // MARK: - Properties
@@ -35,6 +34,7 @@ struct SignedInUserView: View {
   // MARK: - Private Views
 
   /// User avatar with async loading and fallback
+
   @ViewBuilder
   private var userAvatar: some View {
     Group {
@@ -54,6 +54,7 @@ struct SignedInUserView: View {
   }
 
   /// Default avatar for when user image is unavailable
+
   private var defaultAvatar: some View {
     Image(systemName: "person.circle")
       .resizable()
@@ -61,6 +62,7 @@ struct SignedInUserView: View {
   }
 
   /// User name and email display
+
   private var userInfo: some View {
     VStack(alignment: .leading) {
       Text(user.profile?.name ?? "Unknown")
@@ -71,6 +73,7 @@ struct SignedInUserView: View {
   }
 
   /// Sign out button
+
   private var signOutButton: some View {
     Button("Sign out", action: handleSignOut)
   }

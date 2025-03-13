@@ -14,6 +14,7 @@ import Foundation
 // MARK: - Menu Bar Title Generator Protocol
 
 /// Defines interface for generating menu bar titles
+
 protocol MenuBarTitleGenerator {
 
   func generateTitle(error: String?, events: [GoogleEvent]) -> String
@@ -22,6 +23,7 @@ protocol MenuBarTitleGenerator {
 // MARK: - Menu Bar Decorator
 
 /// Formats and decorates menu bar titles based on event status and user preferences
+
 final class MenuBarDecorator: MenuBarTitleGenerator {
 
   // MARK: - Constants
@@ -49,6 +51,7 @@ final class MenuBarDecorator: MenuBarTitleGenerator {
   // MARK: - Private Helpers
 
   /// Generates status text for the menu bar based on event timing
+
   private func generateEventStatus(for event: GoogleEvent) -> String {
     let title =
       Defaults[.showEventTitleInMenuBar]
@@ -81,6 +84,7 @@ final class MenuBarDecorator: MenuBarTitleGenerator {
   }
 
   /// Applies title simplification and truncation based on user preferences
+
   private func simplifyTitle(_ title: String) -> String {
     var result = title
 

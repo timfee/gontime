@@ -12,7 +12,6 @@ import SwiftUI
 // MARK: - Event Row View
 
 /// Displays a single calendar event with time, title, and interaction links
-
 struct EventRow: View {
   private enum Constants {
     static let spacing: CGFloat = 12
@@ -37,6 +36,7 @@ struct EventRow: View {
   // MARK: - Private Views
 
   /// Time column with dynamic width adjustment
+
   private var timeColumn: some View {
     HStack {
       Text(formattedTimeText)
@@ -64,6 +64,7 @@ struct EventRow: View {
   }
 
   /// Event title with truncation
+
   private var titleColumn: some View {
     Text(event.summary ?? "Unnamed event")
       .font(.subheadline)
@@ -72,6 +73,7 @@ struct EventRow: View {
   }
 
   /// Conference link if available
+
   @ViewBuilder
   private var conferenceLink: some View {
     if let conference = event.conferenceData,
@@ -89,6 +91,7 @@ struct EventRow: View {
   }
 
   /// Link to calendar event
+
   private var calendarLink: some View {
     Link(destination: event.htmlLink) {
       Image(systemName: "chevron.right.circle")
@@ -100,6 +103,7 @@ struct EventRow: View {
   }
 
   /// Measures time column width for alignment
+
   private var timeWidthReader: some View {
     GeometryReader { geometry in
       Color.clear.preference(
@@ -112,6 +116,7 @@ struct EventRow: View {
   // MARK: - Private Helpers
 
   /// Formats time text based on event status
+
   private var formattedTimeText: String {
     if let timeLeft = event.timeUntilEnd {
 
@@ -133,6 +138,7 @@ struct EventRow: View {
   }
 
   /// Formats remaining time in hours and minutes
+
   private func formatTimeLeft(hours: Int, minutes: Int) -> String {
     hours > 0
       ? "\(hours):\(String(format: "%02d", minutes)) left"

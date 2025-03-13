@@ -10,7 +10,6 @@
 import SwiftUI
 
 /// Provides mock data for events to be used in previews or testing.
-
 struct EventMockData: View {
 
   // MARK: - Constants
@@ -74,6 +73,7 @@ struct EventMockData: View {
   // MARK: - Private Methods
 
   /// Creates a mock meeting event with conference data.
+
   private func createMeetingEvent(
     id: String,
     title: String,
@@ -117,6 +117,7 @@ struct EventMockData: View {
   }
 
   /// Creates a mock basic event without conference data.
+
   private func createBasicEvent(
     id: String,
     title: String,

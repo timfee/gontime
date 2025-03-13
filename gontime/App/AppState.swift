@@ -13,6 +13,7 @@ import GoogleSignIn
 import SwiftUI
 
 /// Manages the overall state of the application, including authentication, events, and menu bar updates.
+
 @MainActor
 final class AppState: ObservableObject {
 
@@ -58,13 +59,11 @@ final class AppState: ObservableObject {
   // MARK: - Public Methods
 
   /// Clears the current error state.
-
   func clearError() {
     currentError = nil
   }
 
   /// Initiates the sign-in process.
-
   func signIn() async {
     do {
       let user = try await authenticationService.signIn()
@@ -78,7 +77,6 @@ final class AppState: ObservableObject {
   }
 
   /// Signs out the current user and resets relevant state.
-
   func signOut() {
     GIDSignIn.sharedInstance.signOut()
     authState = .signedOut
@@ -87,7 +85,6 @@ final class AppState: ObservableObject {
   }
 
   /// Refreshes the events if the user is signed in.
-
   func refreshEvents() {
     if case .signedIn = authState {
       Task {

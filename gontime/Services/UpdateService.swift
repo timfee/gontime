@@ -46,7 +46,6 @@ struct GitHubRelease: Codable {
 // MARK: - Update Information Model
 
 /// Represents version update information from remote source
-
 struct UpdateInfo: Codable {
   let latest: Double
   let message: String
@@ -57,6 +56,7 @@ struct UpdateInfo: Codable {
 // MARK: - Update Service
 
 /// Manages application update checks and notifications
+
 @MainActor
 final class UpdateService: ObservableObject {
 
@@ -79,7 +79,6 @@ final class UpdateService: ObservableObject {
 
   /// Checks for available updates
   /// - Returns: Boolean indicating if an update is available
-
   func checkForUpdates() async -> Bool {
     do {
       var request = URLRequest(url: apiURL)

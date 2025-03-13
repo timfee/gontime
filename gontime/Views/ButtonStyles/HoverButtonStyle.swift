@@ -10,7 +10,6 @@
 import SwiftUI
 
 /// A button style that provides visual feedback for hover and focus states
-
 struct HoverButtonStyle: ButtonStyle {
 
   // MARK: - Constants
@@ -36,6 +35,7 @@ struct HoverButtonStyle: ButtonStyle {
   /// - Parameters:
   ///   - height: Button height (defaults to 32)
   ///   - cornerRadius: Corner radius for the button background (defaults to 8)
+
   init(
     height: CGFloat = Constants.defaultHeight,
     cornerRadius: CGFloat = Constants.defaultCornerRadius
@@ -71,9 +71,11 @@ struct HoverButtonStyle: ButtonStyle {
 extension ButtonStyle where Self == HoverButtonStyle {
 
   /// Default hover button style
+
   static var hover: HoverButtonStyle { HoverButtonStyle() }
 
   /// Creates a custom hover button style
+
   static func hover(
     height: CGFloat = HoverButtonStyle.Constants.defaultHeight,
     cornerRadius: CGFloat = HoverButtonStyle.Constants.defaultCornerRadius

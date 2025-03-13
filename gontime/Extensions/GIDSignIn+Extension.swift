@@ -14,6 +14,7 @@ extension GIDSignIn {
   /// Provides an async wrapper for restoring previous sign-in state
   /// - Returns: The restored Google user if available
   /// - Throws: AppError.auth if restoration fails or no user is found
+
   @MainActor
 
   func restorePreviousSignInAsync() async throws -> GIDGoogleUser {

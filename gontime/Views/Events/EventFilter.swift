@@ -13,6 +13,7 @@ import Foundation
 // MARK: - Event Filter Protocol
 
 /// Defines interface for filtering calendar events
+
 protocol EventFilterProtocol {
 
   func filter(_ events: [GoogleEvent]) -> [GoogleEvent]
@@ -21,7 +22,6 @@ protocol EventFilterProtocol {
 // MARK: - Default Event Filter
 
 /// Implements standard event filtering based on user preferences
-
 struct DefaultEventFilter: EventFilterProtocol {
 
   func filter(_ events: [GoogleEvent]) -> [GoogleEvent] {

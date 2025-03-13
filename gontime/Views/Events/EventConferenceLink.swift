@@ -12,7 +12,6 @@ import SwiftUI
 // MARK: - Conference Link View
 
 /// Displays a clickable conference link with provider icon or name
-
 struct EventConferenceLink: View {
 
   @Environment(\.openURL) private var openURL
@@ -49,6 +48,7 @@ struct EventConferenceLink: View {
   // MARK: - Private Views
 
   /// Displays either a provider icon or fallback text label
+
   @ViewBuilder
   private var conferenceIcon: some View {
     if let iconUrl = solution.iconUri,

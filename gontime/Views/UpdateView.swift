@@ -10,6 +10,7 @@
 import SwiftUI
 
 /// A view that displays update information and provides update actions
+
 @MainActor
 
 struct UpdateView: View {

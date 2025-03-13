@@ -11,6 +11,7 @@ import Foundation
 import GoogleSignIn
 
 /// Manages Google Sign-In authentication flow
+
 final class AuthenticationService {
 
   // MARK: - Constants
@@ -23,6 +24,7 @@ final class AuthenticationService {
   /// Initiates Google Sign-In flow using the current key window
   /// - Returns: Authenticated Google user
   /// - Throws: AppError.auth if sign-in fails or no window is available
+
   @MainActor
 
   func signIn() async throws -> GIDGoogleUser {
@@ -61,6 +63,7 @@ final class AuthenticationService {
   // MARK: - Private Helpers
 
   /// Creates a standardized authentication error
+
   private func makeError(code: Int, description: String) -> NSError {
     NSError(
       domain: "Auth",

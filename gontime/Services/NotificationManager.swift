@@ -11,6 +11,7 @@ import Defaults
 import UserNotifications
 
 /// Manages local notifications for upcoming calendar events
+
 final class NotificationManager {
 
   // MARK: - Singleton
@@ -30,6 +31,7 @@ final class NotificationManager {
   // MARK: - Public Methods
 
   /// Requests notification authorization if not already granted
+
   @MainActor
 
   func requestAuthorization() async throws {
@@ -40,6 +42,7 @@ final class NotificationManager {
   }
 
   /// Evaluates events and schedules notifications as needed
+
   @MainActor
 
   func checkEventsForNotifications(_ events: [GoogleEvent]) async {

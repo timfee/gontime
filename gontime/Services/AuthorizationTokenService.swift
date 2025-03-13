@@ -13,6 +13,7 @@ import GoogleSignIn
 // MARK: - Authorization Token Service
 
 /// Manages OAuth token refresh and session creation for Google Calendar API requests
+
 final class AuthorizationTokenService {
 
   // MARK: - Public Methods
@@ -20,6 +21,7 @@ final class AuthorizationTokenService {
   /// Creates an authorized URLSession for making API requests
   /// - Returns: URLSession configured with current access token
   /// - Throws: AppError.auth if token refresh fails or no valid token exists
+
   static func createSession() async throws -> URLSession {
     try await withCheckedThrowingContinuation { continuation in
 

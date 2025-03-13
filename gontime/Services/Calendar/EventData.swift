@@ -12,6 +12,7 @@ import Foundation
 import SwiftUI
 
 /// Manages calendar event data and scheduling, including refresh timers and system notifications
+
 @MainActor
 final class EventData: ObservableObject {
 
@@ -24,9 +25,11 @@ final class EventData: ObservableObject {
   // MARK: - Published Properties
 
   /// Currently loaded calendar events
+
   @Published private(set) var events: [GoogleEvent] = []
 
   /// Timestamp of the last successful data refresh
+
   @Published private(set) var lastRefreshDate: Date? = nil
 
   // MARK: - Private Properties
@@ -58,7 +61,6 @@ final class EventData: ObservableObject {
   // MARK: - Public Methods
 
   /// Starts event monitoring and schedules the initial refresh timer
-
   func start() {
     Logger.debug("Starting EventData")
     isActive = true
@@ -72,7 +74,6 @@ final class EventData: ObservableObject {
   }
 
   /// Stops event monitoring and cleans up resources
-
   func stop() {
     Logger.debug("Stopping EventData")
     isActive = false
@@ -86,7 +87,6 @@ final class EventData: ObservableObject {
 
   /// Fetches latest events and updates notifications
   /// - Throws: AppError if the refresh operation fails
-
   func refresh() async throws {
     let now = Date()
     Logger.debug("Starting refresh at: \(now)")

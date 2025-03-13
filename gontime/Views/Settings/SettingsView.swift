@@ -14,7 +14,6 @@ import SwiftUI
 // MARK: - Settings View
 
 /// Main settings view providing user configuration options
-
 struct SettingsView: View {
   @EnvironmentObject var appState: AppState
   @StateObject private var updateService = UpdateService.shared
@@ -30,6 +29,7 @@ struct SettingsView: View {
   // MARK: - View Components
 
   /// Notification settings section with permission handling
+
   @ViewBuilder
   private var notificationSection: some View {
     Section {
@@ -48,6 +48,7 @@ struct SettingsView: View {
   }
 
   /// Event display configuration section
+
   @ViewBuilder
   private var eventDisplaySection: some View {
     Section {
@@ -64,6 +65,7 @@ struct SettingsView: View {
   }
 
   /// Version information footer with update availability
+
   @ViewBuilder
   private var versionFooter: some View {
     VStack(spacing: 4) {
@@ -88,6 +90,7 @@ struct SettingsView: View {
   // MARK: - Notification Handling
 
   /// Handles notification permission requests when enabling notifications
+
   private func handleNotificationChange(to newValue: Int?) {
     guard newValue != nil else { return }
     Task {
@@ -174,6 +177,7 @@ struct SettingsView: View {
 // MARK: - Event Title Settings View
 
 /// Configuration view for event title display options
+
 private struct EventTitleSettings: View {
   @Binding var truncatedLength: Int
   @Binding var simplifyTitles: Bool

@@ -12,7 +12,6 @@ import SwiftUI
 // MARK: - Menu View
 
 /// Main menu view displaying event list or empty state
-
 struct MenuView: View {
 
   // MARK: - Properties

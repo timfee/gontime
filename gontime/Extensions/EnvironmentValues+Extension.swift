@@ -14,6 +14,7 @@ import SwiftUI
 extension EnvironmentValues {
 
   /// Provides access to the time column width across the view hierarchy
+
   var timeColumnWidth: CGFloat {
     get { self[TimeColumnWidthKey.self] }
     set { self[TimeColumnWidthKey.self] = newValue }

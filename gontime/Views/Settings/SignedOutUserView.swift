@@ -12,7 +12,6 @@ import SwiftUI
 // MARK: - Signed Out User View
 
 /// Displays sign-in prompt for unauthenticated users
-
 struct SignedOutUserView: View {
 
   // MARK: - Properties

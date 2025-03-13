@@ -22,6 +22,7 @@ struct gontimeApp: App {
   // MARK: - Initialization
 
   /// Sets up initial app state and checks for updates
+
   @MainActor
   init() {
     let openSettingsAction = Environment(\.openSettings).wrappedValue

@@ -12,7 +12,6 @@ import SwiftUI
 // MARK: - Time Width Preference Key
 
 /// Tracks the maximum width needed for time-based content layout
-
 struct TimeWidthPreferenceKey: PreferenceKey {
   static var defaultValue: CGFloat = 0
 

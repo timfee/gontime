@@ -12,6 +12,7 @@ import Foundation
 import GoogleSignIn
 
 /// Manages calendar event data fetching and processing
+
 final class CalendarDataService {
 
   // MARK: - Constants
@@ -23,6 +24,7 @@ final class CalendarDataService {
   // MARK: - Properties
 
   /// Formatter for ISO8601 date strings in API requests
+
   private static let isoFormatter: ISO8601DateFormatter = {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime]
@@ -47,6 +49,7 @@ final class CalendarDataService {
   /// Fetches and filters calendar events for the current day
   /// - Returns: Array of filtered GoogleEvent objects
   /// - Throws: AppError for network, decoding, or authorization failures
+
   @MainActor
 
   func fetchEvents() async throws -> [GoogleEvent] {

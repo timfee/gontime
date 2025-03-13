@@ -11,6 +11,7 @@ import Foundation
 import os.log
 
 /// A custom logging utility for the application.
+
 enum Logger {
 
   // MARK: - Private Enums
@@ -37,6 +38,7 @@ enum Logger {
   // MARK: - Public Methods
 
   /// Logs a debug message.
+
   static func debug(
     _ message: String,
     function: String = #function,
@@ -46,6 +48,7 @@ enum Logger {
   }
 
   /// Logs an error message, optionally including an Error object.
+
   static func error(
     _ message: String,
     error: Error? = nil,
@@ -57,6 +60,7 @@ enum Logger {
   }
 
   /// Logs a state change message.
+
   static func state(
     _ message: String,
     function: String = #function,
