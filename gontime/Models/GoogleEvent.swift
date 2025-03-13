@@ -43,12 +43,9 @@ struct GoogleEvent: Codable, Identifiable {
     guard let start = startTime else { return nil }
     let now = Date()
     let timeInterval = start.timeIntervalSince(now)
-    // If less than 60 seconds until start, return 0
-    if timeInterval > -60 && timeInterval <= 60 {
-      return (0, 0)
-    }
-    guard timeInterval > 0 else { return nil }
-    let totalMinutes = Int(timeInterval / 60)
+
+    // Convert to total minutes, rounding up for partial minutes
+    let totalMinutes = Int(ceil(timeInterval / 60))
     let hours = totalMinutes / 60
     let minutes = totalMinutes % 60
     return (minutes, hours)
@@ -59,11 +56,9 @@ struct GoogleEvent: Codable, Identifiable {
     else { return nil }
     let now = Date()
     let timeInterval = end.timeIntervalSince(now)
-    // If less than 60 seconds until end, return 0
-    if timeInterval > -60 && timeInterval <= 60 {
-      return (0, 0)
-    }
-    let totalMinutes = Int(timeInterval / 60)
+
+    // Convert to total minutes, rounding up for partial minutes
+    let totalMinutes = Int(ceil(timeInterval / 60))
     let hours = totalMinutes / 60
     let minutes = totalMinutes % 60
     return (minutes, hours)

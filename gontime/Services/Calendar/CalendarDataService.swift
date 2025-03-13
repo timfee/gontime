@@ -52,10 +52,7 @@ final class CalendarDataService {
   func fetchEvents() async throws -> [GoogleEvent] {
     Logger.debug("Fetching events")
 
-    guard let url = createRequestURL() else {
-      throw AppError.request(URLError(.badURL))
-    }
-
+    let url = try buildEventsURL()
     Logger.debug("Fetching from URL: \(url.absoluteString)")
 
     let session = try await AuthorizationTokenService.createSession()
@@ -93,32 +90,35 @@ final class CalendarDataService {
 
   // MARK: - Private Helpers
 
-  /// Constructs the URL for the calendar events API request
-  private func createRequestURL() -> URL? {
-    var components = URLComponents(string: baseURL)
-    components?.queryItems = buildQueryItems()
-    return components?.url
-  }
-
-  /// Builds query parameters for the calendar events request
-  private func buildQueryItems() -> [URLQueryItem] {
+  private func buildEventsURL() throws -> URL {
     let now = Date()
-    let calendar = Calendar.current
+
+    // Only get events that end after 5 minutes ago
+    let startTime = now.addingTimeInterval(-300)  // 5 minutes ago
     let endOfDay =
-      calendar.date(
-        bySettingHour: 23,
-        minute: 59,
-        second: 59,
-        of: calendar.startOfDay(for: now)
+      Calendar.current.date(
+        bySettingHour: 7,
+        minute: 0,
+        second: 0,
+        of: now.addingTimeInterval(24 * 60 * 60)
       ) ?? now
 
-    return [
-      URLQueryItem(name: "timeMin", value: Self.isoFormatter.string(from: now)),
+    Logger.debug("Fetching events between \(startTime) and \(endOfDay)")
+
+    var components = URLComponents(string: baseURL)
+    components?.queryItems = [
+      URLQueryItem(name: "timeMin", value: Self.isoFormatter.string(from: startTime)),
       URLQueryItem(name: "timeMax", value: Self.isoFormatter.string(from: endOfDay)),
       URLQueryItem(name: "singleEvents", value: "true"),
       URLQueryItem(name: "orderBy", value: "startTime"),
       URLQueryItem(name: "eventTypes", value: "default"),
       URLQueryItem(name: "conferenceDataVersion", value: "1"),
     ]
+
+    guard let url = components?.url else {
+      throw AppError.request(URLError(.badURL))
+    }
+
+    return url
   }
 }

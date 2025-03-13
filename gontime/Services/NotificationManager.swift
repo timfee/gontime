@@ -10,8 +10,6 @@
 import Defaults
 import UserNotifications
 
-// Your imports remain the same
-
 /// Manages local notifications for upcoming calendar events
 final class NotificationManager {
 
@@ -45,26 +43,40 @@ final class NotificationManager {
   @MainActor
 
   func checkEventsForNotifications(_ events: [GoogleEvent]) async {
+    Logger.debug("Starting notification check for \(events.count) events")
     do {
       guard let minutes = Defaults[.meetingNotificationTime],
         minutes > 0
       else {
+        Logger.debug("Notifications disabled or invalid time setting")
         await clearAllNotifications()
         return
       }
 
       let settings = await UNUserNotificationCenter.current().notificationSettings()
-      guard settings.authorizationStatus == .authorized else { return }
+      guard settings.authorizationStatus == .authorized else {
+        Logger.debug("Notification authorization not granted")
+        return
+      }
 
       let now = Date()
-      guard let nextEvent = findNextEventRequiringNotification(from: events, after: now) else {
-        if await !pendingNotificationsExist() {
+      let upcomingEvents = findUpcomingEvents(from: events, after: now, minutes: minutes)
+      Logger.debug("Found \(upcomingEvents.count) upcoming events requiring notifications")
+
+      if upcomingEvents.isEmpty {
+        if await pendingNotificationsExist() {
+          Logger.debug("Clearing existing notifications as no upcoming events found")
           await clearAllNotifications()
         }
         return
       }
 
-      try await handleNotificationForNextEvent(nextEvent, minutes: minutes)
+      // Schedule notifications for upcoming events
+      for event in upcomingEvents {
+        Logger.debug("Processing notifications for event: \(event.summary ?? "Untitled")")
+        try await handleNotificationForEvent(event, minutes: minutes)
+      }
+
     } catch {
       Logger.error("Notification handling failed", error: error)
     }
@@ -81,20 +93,20 @@ final class NotificationManager {
     }
   }
 
-  private func findNextEventRequiringNotification(from events: [GoogleEvent], after date: Date)
-    -> GoogleEvent?
+  private func findUpcomingEvents(from events: [GoogleEvent], after date: Date, minutes: Int)
+    -> [GoogleEvent]
   {
     events
       .filter { event in
         guard let startTime = event.startTime else { return false }
         let notificationTime = startTime.addingTimeInterval(
-          -Double(Defaults[.meetingNotificationTime] ?? 0 * 60))
+          -Double(minutes * 60))
         return startTime > date && notificationTime > date
       }
-      .min { $0.startTime ?? date > $1.startTime ?? date }
+      .sorted { $0.startTime ?? date < $1.startTime ?? date }
   }
 
-  private func handleNotificationForNextEvent(_ event: GoogleEvent, minutes: Int) async throws {
+  private func handleNotificationForEvent(_ event: GoogleEvent, minutes: Int) async throws {
     guard let startTime = event.startTime else { return }
     let notificationTime = startTime.addingTimeInterval(-Double(minutes * 60))
 

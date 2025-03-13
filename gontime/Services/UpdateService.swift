@@ -93,9 +93,6 @@ final class UpdateService: ObservableObject {
         throw GitHubAPIError.invalidResponse
       }
 
-      // Log the raw response for debugging
-      let responseString = String(data: data, encoding: .utf8)
-
       guard httpResponse.statusCode == 200 else {
         Logger.error("HTTP error: \(httpResponse.statusCode)")
         throw GitHubAPIError.invalidResponse
