@@ -26,6 +26,7 @@ struct DefaultEventFilter: EventFilterProtocol {
 
   func filter(_ events: [GoogleEvent]) -> [GoogleEvent] {
     events.filter { event in
+
       // Skip full-day events if configured
       guard !(Defaults[.ignoreFullDayEvents] && event.start?.dateTime == nil) else {
         return false

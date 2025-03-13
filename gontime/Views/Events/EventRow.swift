@@ -114,6 +114,7 @@ struct EventRow: View {
   /// Formats time text based on event status
   private var formattedTimeText: String {
     if let timeLeft = event.timeUntilEnd {
+
       // If time until end is 0, show "Ending"
       if timeLeft.hours == 0 && timeLeft.minutes == 0 {
         return "Ending"
@@ -121,6 +122,7 @@ struct EventRow: View {
       return formatTimeLeft(
         hours: timeLeft.hours, minutes: timeLeft.minutes)
     }
+
     // If time until start is 0, show "Now"
     if let timeUntilStart = event.timeUntilStart,
       timeUntilStart.hours == 0 && timeUntilStart.minutes == 0

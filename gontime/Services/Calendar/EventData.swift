@@ -48,6 +48,7 @@ final class EventData: ObservableObject {
   }
 
   deinit {
+
     // Since the class is @MainActor, we can assert we're on the main actor
     MainActor.assumeIsolated {
       cleanup()

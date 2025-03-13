@@ -22,6 +22,7 @@ final class AuthorizationTokenService {
   /// - Throws: AppError.auth if token refresh fails or no valid token exists
   static func createSession() async throws -> URLSession {
     try await withCheckedThrowingContinuation { continuation in
+
       // Attempt to refresh the token if needed before creating the session
       GIDSignIn.sharedInstance.currentUser?.refreshTokensIfNeeded { user, error in
         if let error = error {
