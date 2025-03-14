@@ -59,7 +59,11 @@ final class CalendarDataService {
     Logger.debug("Fetching from URL: \(url.absoluteString)")
 
     let session = try await AuthorizationTokenService.createSession()
-    let request = URLRequest(url: url)
+    var request = URLRequest(url: url)
+
+    // Add network resilience configuration
+    request.timeoutInterval = 30
+    request.cachePolicy = .reloadIgnoringLocalCacheData
 
     do {
       Logger.debug("Making network request")
@@ -95,15 +99,18 @@ final class CalendarDataService {
 
   private func buildEventsURL() throws -> URL {
     let now = Date()
+    let calendar = Calendar.current
 
     // Only get events that end after 5 minutes ago
     let startTime = now.addingTimeInterval(-300)  // 5 minutes ago
+
+    // Set end of day to 23:59:59 of the current day
     let endOfDay =
-      Calendar.current.date(
-        bySettingHour: 7,
-        minute: 0,
-        second: 0,
-        of: now.addingTimeInterval(24 * 60 * 60)
+      calendar.date(
+        bySettingHour: 23,
+        minute: 59,
+        second: 59,
+        of: now
       ) ?? now
 
     Logger.debug("Fetching events between \(startTime) and \(endOfDay)")
