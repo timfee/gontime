@@ -11,241 +11,143 @@ import Defaults
 import UserNotifications
 
 /// Manages local notifications for upcoming calendar events.
-/// This class ensures that:
+/// Coordinates with EventData's minute-aligned refresh cycle for precise notification timing.
 ///
-/// 1. Only one notification is scheduled at a time (for the next upcoming event)
-/// 2. Notifications, once triggered, are not modified
-/// 3. Notifications are only rescheduled if the event time changes
-/// 4. State is properly maintained across timer-based refreshes
-/// 5. Handles last-minute events appropriately
+/// Design Notes:
+/// - Works with EventData's :00 second refresh cycle for precise timing
+/// - Maintains exactly one notification for the next upcoming event
+/// - Uses event etags to detect genuine content changes
+/// - Preserves fired notifications (never removes them)
+/// - Handles notification permissions via SettingsView
 
 final class NotificationManager: @unchecked Sendable {
 
-  // MARK: - Singleton
+  // MARK: - Properties
+
+  /// Shared instance for application-wide notification management
 
   static let shared = NotificationManager()
 
-  // MARK: - Private Properties
+  /// Interface to system notification services
 
-  /// Tracks whether we've already requested notification permissions
+  private let notificationCenter = UNUserNotificationCenter.current()
+
+  /// Tracks whether we've requested permission during this session
 
   private var hasRequestedPermission = false
 
-  /// ID of the event that currently has a scheduled notification
+  /// Currently scheduled notification state
+  /// Used to detect genuine changes and avoid unnecessary updates
 
-  private var currentNotificationId: String?
-
-  /// Scheduled time of the current notification
-  /// Used to detect if an event's time has changed and needs rescheduling
-
-  private var currentNotificationTime: Date?
-
-  /// Reference to notification center to avoid repeated access
-
-  private let notificationCenter: UNUserNotificationCenter
+  private var scheduledNotification: (id: String, etag: String)?
 
   // MARK: - Initialization
 
-  private init() {
-    self.notificationCenter = UNUserNotificationCenter.current()
-    Task { await checkNotificationSettings() }
-  }
+  private init() {}
 
-  // MARK: - Public Methods
+  // MARK: - Public Interface
 
-  /// Requests notification authorization if not already granted
-  /// This is called both during initialization and when notification settings change
-
-  @MainActor
-
-  func requestAuthorization() async throws -> Bool {
-    guard !hasRequestedPermission else { return true }
-    hasRequestedPermission = true
-    let options: UNAuthorizationOptions = [.alert]
-    return try await notificationCenter.requestAuthorization(options: options)
-  }
-
-  /// Main entry point for notification management.
-  /// Called by EventData's timer-based refresh cycle (every minute).
-  /// Evaluates the next upcoming event and manages its notification.
+  /// Updates notification for the next upcoming event if needed
+  /// Called by EventData during its minute-aligned refresh cycle
+  ///
+  /// - Parameter events: Array of calendar events to evaluate
+  /// - Note: EventData ensures this is called at :00 seconds each minute
 
   @MainActor
 
   func checkEventsForNotifications(_ events: [GoogleEvent]) async {
-    do {
-      // MARK: Early Exit: Notifications Disabled
 
-      guard let minutes = Defaults[.meetingNotificationTime],
-        minutes > 0
-      else {
-        Logger.debug("Notifications disabled or invalid notification time setting")
-        return
-      }
+    // Early exit if notifications aren't enabled
+    guard let minutes = Defaults[.meetingNotificationTime],
+      minutes > 0,
+      await notificationCenter.notificationSettings().authorizationStatus == .authorized
+    else { return }
 
-      // MARK: Early Exit: No Authorization
+    // Find the next event that hasn't started
+    guard
+      let nextEvent =
+        events
+        .filter({ $0.startTime?.timeIntervalSinceNow ?? -1 > 0 })
+        .min(by: { ($0.startTime ?? .distantFuture) < ($1.startTime ?? .distantFuture) })
+    else { return }
 
-      let settings = await notificationCenter.notificationSettings()
-      guard settings.authorizationStatus == .authorized else {
-        Logger.debug("Notification authorization not granted")
-        return
-      }
+    // Only update if the event details have changed
+    let needsUpdate =
+      scheduledNotification.map { current in
+        nextEvent.id != current.id || nextEvent.etag != current.etag
+      } ?? true
 
-      // MARK: Find Next Event and Handle State
-
-      let now = Date()
-      let nextEvent = findNextEvent(from: events, after: now)
-
-      switch await handleEventState(nextEvent: nextEvent, minutes: minutes) {
-      case .noEvents:
-
-        clearState()
-      case .eventStarted:
-
-        clearState()
-      case .lastMinute(let event):
-
-        try await scheduleImmediateNotification(for: event)
-        clearState()
-      case .needsScheduling(let event, let notificationTime):
-
-        try await handleEventScheduling(
-          event: event,
-          notificationTime: notificationTime,
-          minutes: minutes
-        )
-      case .noChange:
-
-        break
-      }
-
-    } catch {
-      Logger.error("Notification handling failed", error: error)
-
-      // Don't clear state on error - maintain last known good state
+    if needsUpdate {
+      await scheduleNotification(for: nextEvent, minutes: minutes)
     }
   }
 
-  // MARK: - Private Methods
+  /// Requests notification authorization if not already granted
+  /// Called by SettingsView when enabling notifications
+  ///
+  /// - Returns: Boolean indicating if authorization was granted
+  /// - Throws: System authorization errors
 
-  private func checkNotificationSettings() async {
-    let settings = await notificationCenter.notificationSettings()
-    if settings.authorizationStatus == .notDetermined,
-      Defaults[.meetingNotificationTime] != nil
-    {
+  @MainActor
 
-      // Handle the result of authorization request
-      if let granted = try? await requestAuthorization(), !granted {
-        Logger.debug("Notification authorization denied")
-      }
-    }
+  func requestAuthorization() async throws -> Bool {
+    hasRequestedPermission = true
+    return try await notificationCenter.requestAuthorization(options: [.alert])
   }
 
-  private func findNextEvent(from events: [GoogleEvent], after date: Date) -> GoogleEvent? {
-    events
-      .filter { event in
-        guard let startTime = event.startTime else { return false }
-        return startTime > date
-      }
-      .min { ($0.startTime ?? date) < ($1.startTime ?? date) }
-  }
+  // MARK: - Private Implementation
 
-  private enum EventState {
-    case noEvents
-    case eventStarted
-    case lastMinute(GoogleEvent)
-    case needsScheduling(GoogleEvent, Date)
-    case noChange
-  }
-
-  private func handleEventState(nextEvent: GoogleEvent?, minutes: Int) async -> EventState {
-    guard let event = nextEvent,
-      let startTime = event.startTime
-    else {
-      return .noEvents
-    }
-
-    let now = Date()
-    let notificationTime = startTime.addingTimeInterval(-Double(minutes * 60))
-
-    if startTime <= now {
-      return .eventStarted
-    }
-
-    if notificationTime <= now && startTime > now {
-      return .lastMinute(event)
-    }
-
-    // If it's the same event with same time, no changes needed
-    if event.id == currentNotificationId,
-      let currentTime = currentNotificationTime,
-      abs(currentTime.timeIntervalSince(notificationTime)) < 60
-    {
-      return .noChange
-    }
-
-    return .needsScheduling(event, notificationTime)
-  }
-
-  private func handleEventScheduling(
-    event: GoogleEvent,
-    notificationTime: Date,
-    minutes: Int
-  ) async throws {
-
-    // If same event but time changed, or different event
-    if let currentId = currentNotificationId {
-      notificationCenter.removePendingNotificationRequests(withIdentifiers: [currentId])
-    }
-
-    try await scheduleNotification(for: event, at: notificationTime, minutes: minutes)
-    currentNotificationId = event.id
-    currentNotificationTime = notificationTime
-  }
-
-  private func clearState() {
-    currentNotificationId = nil
-    currentNotificationTime = nil
-  }
+  /// Schedules a notification for an event
+  ///
+  /// - Parameters:
+  ///   - event: The event to notify about
+  ///   - minutes: How many minutes before the event to notify
 
   private func scheduleNotification(
     for event: GoogleEvent,
-    at notificationTime: Date,
     minutes: Int
-  ) async throws {
+  ) async {
+    guard let startTime = event.startTime else { return }
+
+    // Remove existing notification if we have one
+    if let current = scheduledNotification {
+      notificationCenter.removePendingNotificationRequests(withIdentifiers: [current.id])
+    }
+
+    // Calculate exact notification time
+    let notificationTime =
+      Calendar.current.date(
+        byAdding: .minute,
+        value: -minutes,
+        to: startTime
+      ) ?? startTime
+
+    // Create notification content
     let content = UNMutableNotificationContent()
     content.title = event.summary ?? "Untitled Event"
     content.body = "Starting in \(minutes) minutes"
 
+    // Use calendar trigger for precise timing
     let components = Calendar.current.dateComponents(
       [.year, .month, .day, .hour, .minute],
       from: notificationTime
     )
-
     let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+
+    // Schedule the notification
     let request = UNNotificationRequest(
       identifier: event.id,
       content: content,
       trigger: trigger
     )
 
-    try await notificationCenter.add(request)
-    Logger.debug(
-      "Scheduled notification for '\(event.summary ?? "Untitled")' at \(notificationTime)")
-  }
-
-  private func scheduleImmediateNotification(for event: GoogleEvent) async throws {
-    let content = UNMutableNotificationContent()
-    content.title = event.summary ?? "Untitled Event"
-    content.body = "Starting soon"
-
-    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-    let request = UNNotificationRequest(
-      identifier: event.id,
-      content: content,
-      trigger: trigger
-    )
-
-    try await notificationCenter.add(request)
-    Logger.debug("Scheduled immediate notification for '\(event.summary ?? "Untitled")'")
+    do {
+      try await notificationCenter.add(request)
+      scheduledNotification = (event.id, event.etag)
+      Logger.debug(
+        "Scheduled notification for '\(event.summary ?? "Untitled")' at \(notificationTime)")
+    } catch {
+      Logger.error("Failed to schedule notification", error: error)
+    }
   }
 }

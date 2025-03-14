@@ -19,6 +19,14 @@ final class CalendarDataService {
 
   private enum Constants {
     static let defaultBaseURL = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+
+    /// How far back to look for events (in seconds)
+
+    static let lookbackWindow: TimeInterval = 300  // 5 minutes
+
+    /// Network request timeout duration
+
+    static let requestTimeout: TimeInterval = 30
   }
 
   // MARK: - Properties
@@ -62,7 +70,7 @@ final class CalendarDataService {
     var request = URLRequest(url: url)
 
     // Add network resilience configuration
-    request.timeoutInterval = 30
+    request.timeoutInterval = Constants.requestTimeout
     request.cachePolicy = .reloadIgnoringLocalCacheData
 
     do {
@@ -101,17 +109,20 @@ final class CalendarDataService {
     let now = Date()
     let calendar = Calendar.current
 
-    // Only get events that end after 5 minutes ago
-    let startTime = now.addingTimeInterval(-300)  // 5 minutes ago
+    // Only get events that end after lookback window
+    let startTime = now.addingTimeInterval(-Constants.lookbackWindow)
 
     // Set end of day to 23:59:59 of the current day
-    let endOfDay =
-      calendar.date(
+    guard
+      let endOfDay = calendar.date(
         bySettingHour: 23,
         minute: 59,
         second: 59,
         of: now
-      ) ?? now
+      )
+    else {
+      throw AppError.request(URLError(.badURL))
+    }
 
     Logger.debug("Fetching events between \(startTime) and \(endOfDay)")
 
